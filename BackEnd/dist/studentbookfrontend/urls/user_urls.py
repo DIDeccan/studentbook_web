@@ -13,7 +13,9 @@ urlpatterns = [
     path('student-register', StudentRegisterAPIView.as_view()),
     path('student-activation', StudentActivationAPIView.as_view()),    
     path('student-list', StudentListAPIView.as_view()),
-    path('student-profile/<int:pk>', StudentDetailAPI.as_view()),
+    path('student-profile', StudentDetailAPI.as_view()),
     path('class-list', ClassListAPIView.as_view()),
     path("user-change-password", ChangePasswordAPIView.as_view()),
+    path("class-list-demo-vedio", ClassListDemoVideosApi.as_view()),
+
 ]

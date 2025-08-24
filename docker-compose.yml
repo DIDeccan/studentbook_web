@@ -117,7 +117,7 @@ services:
       context: ./BackEnd   # points to folder with Dockerfile
       dockerfile: Dockerfile
     volumes:
-      - ./BackEnd:/dist
+      - ./BackEnd/dist:/app
     env_file:
       - ./BackEnd/.env
     ports:

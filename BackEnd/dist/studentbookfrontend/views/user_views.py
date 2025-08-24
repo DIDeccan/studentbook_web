@@ -102,23 +102,44 @@ class StudentListAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# class StudentDetailAPI(APIView):
+#     permission_classes = [IsAuthenticated]
+#     def get(self, request, pk, format=None):
+#         student = get_object_or_404(Student, pk=pk)
+#         serializer = StudentSerializer(student)
+#         return Response(serializer.data)
+
+#     def put(self, request, pk, format=None):
+#         student = get_object_or_404(Student, pk=pk)
+#         serializer = StudentSerializer(student, data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#     def delete(self, request, pk, format=None):
+#         student = get_object_or_404(Student, pk=pk)
+#         student.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class StudentDetailAPI(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request, pk, format=None):
-        student = get_object_or_404(Student, pk=pk)
+    def get(self, request, format=None):
+        student = get_object_or_404(Student, phone_number=request.user)
         serializer = StudentSerializer(student)
         return Response(serializer.data)
 
-    def put(self, request, pk, format=None):
-        student = get_object_or_404(Student, pk=pk)
-        serializer = StudentSerializer(student, data=request.data)
+    def put(self, request, format=None):
+        student = get_object_or_404(Student,phone_number=request.user)
+        serializer = StudentSerializer(student, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk, format=None):
-        student = get_object_or_404(Student, pk=pk)
+    def delete(self, request, format=None):
+        student = get_object_or_404(Student, phone_number=request.user)
         student.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -595,4 +616,27 @@ class ChangePasswordAPIView(APIView):
                         )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ClassListDemoVideosApi(APIView):
+
+    def get(self, request, *args, **kwargs):
+        class_list = Class.objects.all()
+        data = []
+
+        for class_data in class_list:
+
+            data.append({
+                "id": class_data.id,
+                "name": class_data.name,
+                "cost": class_data.amount,
+                'discription' : class_data.description,
+                'vedio_url': "hgsvhxgsdvh"
+            })
+
+        return api_response(
+            message="Class List Sent.",
+            message_type="success",
+            status_code=status.HTTP_200_OK,
+            data=data
+        )
 
