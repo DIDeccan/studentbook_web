@@ -57,18 +57,19 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 message_type= "error",
                 data= None
             )
-        active_tokens = OutstandingToken.objects.filter(user=user,
-                                                        ).exclude(
-            id__in=BlacklistedToken.objects.values_list('token_id', flat=True)
-        )
-
-        if active_tokens.exists():
-            # raise AuthenticationFailed("User already logged in on another device.")
-            raise CustomAPIException(
-                message= "User already logged in on another device",
-                message_type= "error",
-                data= None
+        if user.user_type == 'student':
+            active_tokens = OutstandingToken.objects.filter(user=user,
+                                                            ).exclude(
+                id__in=BlacklistedToken.objects.values_list('token_id', flat=True)
             )
+
+            if active_tokens.exists():
+                # raise AuthenticationFailed("User already logged in on another device.")
+                raise CustomAPIException(
+                    message= "User already logged in on another device",
+                    message_type= "error",
+                    data= None
+                )
   
 
         # Add custom claims
