@@ -3,7 +3,7 @@ import { Card, CardBody, CardTitle, CardText, Button } from 'reactstrap'
 import video1 from '@src/assets/videos/video1.mp4'
 import video2 from '@src/assets/videos/video2.mp4'
 import video3 from '@src/assets/videos/video3.mp4'
-import Register from './Register' // <-- Import Register modal
+import Register from './Register' 
 
 const Classcard = () => {
   const classData = [
@@ -37,10 +37,7 @@ const Classcard = () => {
   const handleSubscribe = () => {
     const userData = JSON.parse(localStorage.getItem('userData'))
     if (userData && userData.accessToken) {
-      // If already logged in
-      // window.location.href = '/dashboard/analytics'
     } else {
-      // Open Register modal
       toggleRegister()
     }
   }
@@ -83,13 +80,11 @@ const Classcard = () => {
         ))}
       </div>
 
-      {/* Register Modal */}
       <Register
         isOpen={isRegisterOpen}
         toggle={toggleRegister}
         openLogin={() => {
           toggleRegister()
-          // You can also open Login modal here if you have it
         }}
       />
     </div>

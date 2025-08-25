@@ -17,12 +17,14 @@ import {
   Button,
   FormFeedback,
   Alert,
+  Spinner,
 } from "reactstrap";
 import { Facebook, Twitter, Mail, GitHub } from "react-feather";
 import "@styles/react/pages/page-authentication.scss";
 import { signupUser, verifyOtp } from "../../../redux/authentication";
 import api from "@src/apis/api";
 import API_ENDPOINTS from "@src/apis/endpoints";
+import { toast } from "react-toastify";
 
 const defaultValues = {
   firstName: "",
@@ -47,6 +49,7 @@ const Register = ({ isOpen, toggle, openPayment }) => {
   const [otpMode, setOtpMode] = useState(false);
   const [otp, setOtp] = useState("");
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
   const { handleSubmit, control, formState: { errors, isSubmitSuccessful }, watch, setError, clearErrors, reset } = useForm({ defaultValues });
   
   const password = watch("password");
@@ -62,7 +65,6 @@ const Register = ({ isOpen, toggle, openPayment }) => {
     }
   }, [confirmPassword, password, setError, clearErrors]);
 
-    // Fetch class data
   useEffect(() => {
     const fetchClasses = async () => {
       try {
@@ -89,16 +91,17 @@ const Register = ({ isOpen, toggle, openPayment }) => {
       password: data.password,
       identifier: "email",
     };
-
+setLocalLoading(true);
   try {
     const res = await dispatch(signupUser(payload)).unwrap();
     setOtpMode(true);
-    alert(res.message || "OTP sent to your Phone. Enter it below.");
+     setRegisteredEmail(data.email);
+    toast.success(res.message || "OTP sent to your Phone. Enter it below.");
   } catch (err) {
     if (err.message_type === "error" && err.message.toLowerCase().includes("email")) {
       setError("email", { type: "manual", message: err.message });
     } else {
-      setError("formError", { type: "manual", message: err.message || "Registration failed" });
+      toast.error(err.message || "Registration failed");
     }
   }finally {
     setLocalLoading(false);
@@ -108,18 +111,45 @@ const Register = ({ isOpen, toggle, openPayment }) => {
   // OTP Verify
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
-    if (!otp) return alert("Enter OTP");
-    if (!registrationData) return alert("Registration data missing!");
+    if (!otp) {
+      toast.error("Please enter OTP");
+      return;
+    }
+    if (!registrationData) {
+      toast.error("Registration data missing!");
+      return;
+    }
     const payload = { ...registrationData, otp };
+    setLocalLoading(true);
 
     try {
       await dispatch(verifyOtp(payload)).unwrap();
+      toast.success("OTP Verified Successfully");
       toggle();           
       openPayment();      
     } catch (err) {
-      alert("OTP verification failed");
+      toast.error("OTP verification failed");
+    }finally {
+      setLocalLoading(false);
     }
   };
+
+  const handleResendOtp = async () => {
+  if (!registrationData?.email) {
+    toast.error("Email missing. Please sign up again.");
+    return;
+  }
+
+  setResendLoading(true);
+  try {
+    await dispatch(resendOtp(registrationData.email)).unwrap();
+    toast.success("OTP resent successfully!");
+  } catch (err) {
+    toast.error(err || "Failed to resend OTP");
+  } finally {
+    setResendLoading(false);
+  }
+};
 
   return (
    <Modal
@@ -163,12 +193,12 @@ const Register = ({ isOpen, toggle, openPayment }) => {
           {/* Signup Form */}
           {!otpMode ? (
             <>
-              {isSubmitSuccessful && (
+              {/* {isSubmitSuccessful && (
                 <Alert color="success">
                   Signup successful. Please log in.
                 </Alert>
-              )}
-
+              )} */}
+              
               {/* First Name */}
               <FormGroup>
                 <Label>First Name</Label>
@@ -342,7 +372,7 @@ const Register = ({ isOpen, toggle, openPayment }) => {
                 className="mt-1"
                 disabled={localLoading}
               >
-                {localLoading ? "Registering..." : "Register"}
+               {localLoading ? <Spinner size="sm" /> : "Register"}
               </Button>
             </>
           ) : (
@@ -358,6 +388,7 @@ const Register = ({ isOpen, toggle, openPayment }) => {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                   placeholder="Enter OTP"
+                  required
                 />
               </FormGroup>
               <Button
@@ -366,8 +397,20 @@ const Register = ({ isOpen, toggle, openPayment }) => {
                 block
                 disabled={localLoading}
               >
-                {localLoading ? "Verifying..." : "Verify OTP"}
+                {localLoading ? <Spinner size="sm" /> : "Verify OTP"}
               </Button>
+
+              {/* Resend OTP */}
+  <div className="mt-3">
+    <Button
+      type="button"
+      color="link"
+      onClick={handleResendOtp}
+      disabled={resendLoading}
+    >
+      {resendLoading ? "Resending..." : "Resend OTP"}
+    </Button>
+  </div>
             </>
           )}
         </Form>

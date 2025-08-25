@@ -6,7 +6,8 @@ import api from "@src/apis/api";
 import API_ENDPOINTS from "@src/apis/endpoints";
 import { AbilityContext } from '@src/utility/context/Can';
 import { useNavigate } from "react-router-dom";  
-import { getHomeRouteForLoggedInUser } from "@utils";  
+import { getHomeRouteForLoggedInUser } from "@utils"; 
+import { toast } from "react-toastify"; 
 
 const PaymentModal = ({ isOpen, toggle }) => {
   const ability = useContext(AbilityContext)
@@ -23,10 +24,9 @@ const PaymentModal = ({ isOpen, toggle }) => {
  const openRazorpay = (orderData) => {
   if (!orderData) return;
 
-  // Clean access token from redux or localStorage
   const token = accessToken || localStorage.getItem("accessToken")?.replace(/^"|"$/g, "");
   if (!token) {
-    alert("Access token missing. Please complete OTP verification first.");
+    toast.error("Access token missing. Please complete OTP verification first.");
     return;
   }
 
@@ -44,9 +44,9 @@ const PaymentModal = ({ isOpen, toggle }) => {
     },
     theme: { color: "#6366f1" },
     handler: async (response) => {
-        console.log("🔹 Payment verification payload:", response); 
+        console.log("Payment verification payload:", response); 
       try {
-        console.log("🔹 Payment verification payload:", {
+        console.log("Payment verification payload:", {
           order_id: response.razorpay_order_id,
           payment_id: response.razorpay_payment_id,
           signature: response.razorpay_signature,
@@ -62,15 +62,15 @@ const PaymentModal = ({ isOpen, toggle }) => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log("✅ Payment verification response:", verifyRes.data);
-        alert("Payment successful ✅");
+        console.log("Payment verification response:", verifyRes.data);
+        toast.success("Payment successful");
          ability.update([{ action: 'manage', subject: 'all' }]);
         toggle(); 
         const role = userData?.role || registrationData?.role || "student";
     navigate(getHomeRouteForLoggedInUser(role));
       } catch (err) {
-        console.error("❌ Payment verification error:", err.response?.data || err.message);
-        alert("Payment verification failed. Please try again.");
+        console.error("Payment verification error:", err.response?.data || err.message);
+        toast.error("Payment verification failed. Please try again.");
       }
     },
   };

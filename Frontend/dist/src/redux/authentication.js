@@ -2,10 +2,10 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@src/apis/api";
 import API_ENDPOINTS from "@src/apis/endpoints";
 import toast from "react-hot-toast";
-
+import { safeParseLocalStorage } from "../utils/storage";
 // --- Thunks ---
 
-// 1. Register user
+// Register user
 export const signupUser = createAsyncThunk(
   "auth/signupUser",
   async (userData, { rejectWithValue }) => {
@@ -20,7 +20,7 @@ export const signupUser = createAsyncThunk(
   }
 );
 
-// 2. Verify OTP
+// Verify OTP
 export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
   async (otpData, { rejectWithValue }) => {
@@ -28,14 +28,29 @@ export const verifyOtp = createAsyncThunk(
       const response = await api.post(API_ENDPOINTS.AUTH.VERIFY_OTP, otpData, {
         headers: { "Content-Type": "application/json" },
       });
-      return response.data; // tokens + message
+      return response.data; 
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-// 3. Create Order
+// Resend OTP
+export const resendOtp = createAsyncThunk(
+  "auth/resendOtp",
+  async (email, { rejectWithValue }) => {
+    try {
+      const response = await api.post(API_ENDPOINTS.AUTH.RESEND_OTP, { email }, {
+        headers: { "Content-Type": "application/json" },
+      });
+      return response.data; 
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+// Create Order
 export const createOrder = createAsyncThunk(
   "auth/createOrder",
   async (_, { getState, rejectWithValue }) => {
@@ -48,7 +63,6 @@ export const createOrder = createAsyncThunk(
       if (!token) return rejectWithValue("User not authenticated.");
       if (!registrationData) return rejectWithValue("Registration data missing.");
 
-       // prefer registrationData for fresh users, fallback to userData for returning
       const studentClass =
         registrationData?.student_class || userData?.student_class;
 
@@ -74,29 +88,28 @@ export const createOrder = createAsyncThunk(
   }
 );
 
-// 4. Login (using phone_number)
+
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async ({ phone_number, password }, { getState, rejectWithValue }) => {
+  async ({ phone_number, password }, { rejectWithValue, dispatch }) => {
     try {
-      const state = getState().auth;
+      // Login
+      const res = await api.post(API_ENDPOINTS.AUTH.LOGIN, { phone_number, password });
+      const { access, refresh } = res.data;
 
-      if (state.accessToken && state.refreshToken && state.userData) {
-        return {
-          access: state.accessToken,
-          refresh: state.refreshToken,
-          user: state.userData,
-        };
-      }
-
-      const payload = { phone_number, password };
-      const res = await api.post(API_ENDPOINTS.AUTH.LOGIN, payload, {
-        headers: { "Content-Type": "application/json" },
+      // Fetch profile
+      const profileRes = await api.get(API_ENDPOINTS.STUDENTS.PROFILE, {
+        headers: { Authorization: `Bearer ${access}` }
       });
 
-      return res.data; 
+      const userData = profileRes.data;
+
+      localStorage.setItem("accessToken", access);
+      localStorage.setItem("refreshToken", refresh);
+      localStorage.setItem("userData", JSON.stringify(userData));
+
+      return { access, refresh, user: userData };
     } catch (err) {
-      console.log("Login error response:", err.response?.data);
       return rejectWithValue(err.response?.data || "Login failed");
     }
   }
@@ -105,7 +118,6 @@ export const loginUser = createAsyncThunk(
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
   async (payload, { rejectWithValue }) => {
-    // payload: { phone } for OTP OR { phone, otp, newPassword, confirmPassword } for reset
     try {
       const body = payload.otp
         ? {
@@ -171,7 +183,7 @@ const authSlice = createSlice({
     accessToken: localStorage.getItem("accessToken") || null,
     refreshToken: localStorage.getItem("refreshToken") || null,
     orderData: null,
-    userData: JSON.parse(localStorage.getItem("userData")) || null,
+    userData: safeParseLocalStorage("userData")
   },
   reducers: {
     logout: (state) => {
@@ -222,7 +234,7 @@ const authSlice = createSlice({
       role: "student",
     };
 
-    state.userData = userData;   // ✅ FIX: keep Redux in sync
+    state.userData = userData;   
     localStorage.setItem("accessToken", tokens.access);
     localStorage.setItem("refreshToken", tokens.refresh);
     localStorage.setItem("userData", JSON.stringify(userData));
@@ -255,13 +267,14 @@ const authSlice = createSlice({
         state.accessToken = tokens.access || null;
         state.refreshToken = tokens.refresh || null;
 
+        const userData = tokens.user || state.registrationData || {};
+  state.userData = userData;
         
-        // state.userData = tokens.user || null;
 
         if (tokens.access && tokens.refresh) {
           localStorage.setItem("accessToken", tokens.access);
           localStorage.setItem("refreshToken", tokens.refresh);
-          localStorage.setItem("userData", JSON.stringify(tokens.user));
+          localStorage.setItem("userData", JSON.stringify(userData));
         }
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -297,7 +310,7 @@ const authSlice = createSlice({
         state.orderData = null;
         state.userData = null;
         localStorage.clear();
-        toast.success("Logout successful 👋");
+        toast.success("Logout successful");
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
@@ -308,7 +321,7 @@ const authSlice = createSlice({
         state.orderData = null;
         state.userData = null;
         localStorage.clear();
-        toast.error(action.payload || "Logout failed ❌");
+        toast.error(action.payload || "Logout failed");
       });
   },
 });

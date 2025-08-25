@@ -1,5 +1,5 @@
 import { DefaultRoute } from '../router/routes'
-
+import { safeParseLocalStorage } from '../utils/storage'
 // ** Checks if an object is empty (returns boolean)
 export const isObjEmpty = obj => Object.keys(obj).length === 0
 
@@ -51,7 +51,8 @@ export const formatDateToMonthShort = (value, toTimeForCurrentDay = true) => {
  *  ? e.g. If you are using cookies to store the application please update this function
  */
 export const isUserLoggedIn = () => localStorage.getItem('userData')
-export const getUserData = () => JSON.parse(localStorage.getItem('userData'))
+// export const getUserData = () => JSON.parse(localStorage.getItem('userData'))
+export const getUserData = () => safeParseLocalStorage("userData");
 
 /**
  ** This function is used for demo purpose route navigation
@@ -62,7 +63,7 @@ export const getUserData = () => JSON.parse(localStorage.getItem('userData'))
  * @param {String} userRole Role of user
  */
 export const getHomeRouteForLoggedInUser = userRole => {
-  console.log('User Role:', userRole)
+  // console.log('User Role:', userRole)
   if (userRole === 'admin') return DefaultRoute
   if(userRole === "student") return DefaultRoute
   if (userRole === 'client') return '/access-control'
