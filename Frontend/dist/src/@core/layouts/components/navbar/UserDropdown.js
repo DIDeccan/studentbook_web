@@ -7,6 +7,7 @@ import { Power, Settings } from "react-feather";
 import { UncontrolledDropdown, DropdownMenu, DropdownToggle, DropdownItem } from "reactstrap";
 import defaultAvatar from "@src/assets/images/portrait/small/avatar-s-11.jpg";
 import { logoutUser } from "@store/authentication"; 
+import { safeParseLocalStorage } from "../../../../utils/storage";
 
 const UserDropdown = () => {
   const dispatch = useDispatch();
@@ -15,7 +16,8 @@ const UserDropdown = () => {
 
   useEffect(() => {
     if (isUserLoggedIn() !== null) {
-      setUserData(JSON.parse(localStorage.getItem("userData")));
+      // setUserData(JSON.parse(localStorage.getItem("userData")));
+      setUserData(safeParseLocalStorage("userData"))
     }
   }, []);
 
@@ -33,7 +35,7 @@ const UserDropdown = () => {
       </DropdownToggle>
 
       <DropdownMenu end>
-        <DropdownItem tag={Link} to="/profile-settings">
+        <DropdownItem tag={Link} to="pages/profile">
           <Settings size={14} className="me-75" />
           <span className="align-middle">Profile Settings</span>
         </DropdownItem>

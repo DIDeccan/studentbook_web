@@ -7,11 +7,13 @@ import { AbilityContext } from '@src/utility/context/Can'
 
 // ** Spinner Import
 import Spinner from '../spinner/Loading-spinner'
+import { safeParseLocalStorage } from '../../../utils/storage'
 
 const PrivateRoute = ({ children, route }) => {
   // ** Hooks & Vars
   const ability = useContext(AbilityContext)
-  const user = JSON.parse(localStorage.getItem('userData'))
+  // const user = JSON.parse(localStorage.getItem('userData'))
+  const user = safeParseLocalStorage("userData");
 
   if (route) {
     let action = null

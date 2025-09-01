@@ -30,7 +30,6 @@ import illustrationsLight from '@src/assets/images/pages/login-v2.svg'
 import illustrationsDark from '@src/assets/images/pages/login-v2-dark.svg'
 
 import '@styles/react/pages/page-authentication.scss'
-// import { getProfile, loginUser, logout } from '../../../redux/authentication'
 import SwiperBook from './SwiperBook'
 import Classcard from './ClassCard'
 import WhyChooseUs from './WhyChooseUs'
@@ -62,7 +61,6 @@ const defaultValues = {
 }
 
 const Login = () => {
-  // ** Hooks
   const { skin } = useSkin()
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -75,17 +73,7 @@ const Login = () => {
   } = useForm({ defaultValues })
 
   const source = skin === 'dark' ? illustrationsDark : illustrationsLight
-  // useEffect(() => {
-  //   if (!window.Razorpay) {
-  //     const script = document.createElement("script");
-  //     script.src = "https://checkout.razorpay.com/v1/checkout.js";
-  //     script.async = true;
-  //     script.onload = () => console.log("✅ Razorpay SDK loaded");
-  //     script.onerror = () => console.error("❌ Failed to load Razorpay SDK");
-  //     document.body.appendChild(script);
-  //   }
-  // }, []);
-// modals 
+
    const [modalOpen, setModalOpen] = useState(false)
    const [loginModalOpen, setLoginModalOpen] = useState(false)
   const toggleModal = () => setModalOpen(!modalOpen)
@@ -95,9 +83,7 @@ const Login = () => {
 const [registerOpen, setRegisterOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   return (
-    // <div className='auth-wrapper auth-cover'>
     <div>
-      {/* new code starts here */}
     <div className="hero-wrapper" style={{ height: '75px' }}>
       <div className="d-flex align-items-center justify-content-between px-3 py-2">
         <Link className="d-flex align-items-center text-decoration-none" to="/">
@@ -148,21 +134,17 @@ const [registerOpen, setRegisterOpen] = useState(false);
         </Link>
 
         <div>
-          {/* <Button outline color="primary" className="me-2" onClick={() => setRegisterOpen(true)}>
-            Sign Up
-          </Button> */}
+        
           <Button
     outline
     color="primary"
     className="me-2"
     onClick={() => {
-      const token = localStorage.getItem("accessToken"); // or whatever key you stored after OTP verification
+      const token = localStorage.getItem("accessToken"); 
 
       if (token) {
-        // OTP already verified → open PaymentModal
         setPaymentOpen(true);
       } else {
-        // New user → open RegisterModal
         setRegisterOpen(true);
       }
     }}
@@ -185,15 +167,6 @@ const [registerOpen, setRegisterOpen] = useState(false);
   isOpen={paymentOpen}
   toggle={() => setPaymentOpen(!paymentOpen)}
 />
-
-    {/* <Register
-        isOpen={modalOpen}
-        toggle={toggleModal}
-        openLogin={() => {
-          setModalOpen(false)
-          setLoginModalOpen(true)
-        }}
-      /> */}
 
       <LoginBasic
         isOpen={loginModalOpen}

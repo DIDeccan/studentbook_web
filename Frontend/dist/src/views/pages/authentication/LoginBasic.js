@@ -30,11 +30,13 @@ const LoginBasic = ({ isOpen, toggle, openRegister }) => {
 
       if (loginUser.fulfilled.match(resultAction)) {
         const user = resultAction.payload.user;
+
+
         ability.update([{ action: 'manage', subject: 'all' }]);
-        // ability.update(res.user.userRole.ability)
         toast.success("Login successful!");
         toggle();
-       navigate(getHomeRouteForLoggedInUser(user.role));
+          const role = user?.user_type || "student";
+    navigate(getHomeRouteForLoggedInUser(role));
       } else {
         setError("username", { type: "manual", message: resultAction.payload?.message || "Login failed" });
         toast.error(resultAction.payload?.message || "Login failed");

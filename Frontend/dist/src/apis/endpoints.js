@@ -14,7 +14,8 @@ const API_ENDPOINTS = {
 
   STUDENTS: {
     LIST: `${BASE_URL}/student-list`,
-    DETAILS: (id) => `${BASE_URL}/student-detail/${id}`
+    DETAILS: (id) => `${BASE_URL}/student-detail/${id}`,
+    PROFILE: `${BASE_URL}/student-profile`
   },
   PAYMENT: {
     CREATE_ORDER: `${BASE_URL}/payment-create-order`,

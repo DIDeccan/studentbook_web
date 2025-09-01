@@ -31,14 +31,12 @@ const ForgotPassword = ({ isOpen, toggle }) => {
 
     try {
       if (step === 1) {
-        // Step 1: Send only phone number
         await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
           user: phone
         })
         toast.success('OTP sent to your phone!')
         setStep(2)
       } else {
-        // Step 2: Send phone + otp + new passwords
         await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
           user: phone,
           otp,
