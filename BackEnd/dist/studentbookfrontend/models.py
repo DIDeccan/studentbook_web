@@ -166,7 +166,8 @@ class User(AbstractBaseUser):
 
 class Student(User):
     # registration_id = models.CharField(max_length=20, unique=True, editable=False)
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="students", null=True,blank=True)
+    # school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="students", null=True,blank=True)
+    school = models.CharField(max_length=255, null=True, blank=True)
     student_class = models.ForeignKey(Class, on_delete=models.CASCADE, related_name="main_students")
 
 
@@ -316,3 +317,15 @@ class SubTopic(models.Model):
     def __str__(self):
         return self.subtopic_name
         
+class GeneralContent(models.Model):
+    """
+    Represents general content that can be associated with a Yoga, Sports, GK etc.
+    Stores content title, description, optional file attachment, and links to its related entities.
+    """
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    image = models.FileField(upload_to='general_content_files/', blank=True, null=True)
+
+
+    def __str__(self):
+        return self.title

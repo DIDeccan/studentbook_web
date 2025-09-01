@@ -13,9 +13,12 @@ urlpatterns = [
     path('student-register', StudentRegisterAPIView.as_view()),
     path('student-activation', StudentActivationAPIView.as_view()),    
     path('student-list', StudentListAPIView.as_view()),
-    path('student-profile', StudentDetailAPI.as_view()),
+    # path('student-profile', StudentDetailAPI.as_view()),
+     path('student-profile/<int:student_id>/<int:class_id>/', StudentDetailAPI.as_view()),
     path('class-list', ClassListAPIView.as_view()),
     path("user-change-password", ChangePasswordAPIView.as_view()),
     path("class-list-demo-vedio", ClassListDemoVideosApi.as_view()),
+    path("resend_otp", ResendOtpAPIView.as_view()),
+    path("verify-otp", OtpVerificationAPIView.as_view()),
 
 ]

@@ -51,7 +51,11 @@ class RazorpayOrderAPIView(APIView):
                 data = order_response
             )
         except Exception as e:
-            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return api_response(
+                message=str(e),
+                message_type="error",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class TransactionAPIView(APIView):
     """This API will complete the order and save the transaction"""
@@ -112,11 +116,7 @@ class TransactionAPIView(APIView):
                 student.is_active = True
                 student.save()
 
-            # return Response({
-            #     "status_code": status.HTTP_201_CREATED,
-            #     "message": "Transaction verified and course added to student packages",
-            #     "student_package_id": student_package.id
-            # }, status=status.HTTP_201_CREATED)
+
             data = {
                 "student_package_id": student_package.id
             }
@@ -130,10 +130,6 @@ class TransactionAPIView(APIView):
         except SignatureVerificationError:
             subscriptionorder.payment_status = 'failed'
             subscriptionorder.save()
-            # return Response({
-            #     "status_code": status.HTTP_400_BAD_REQUEST,
-            #     "message": "Payment signature verification failed"
-            # }, status=status.HTTP_400_BAD_REQUEST)
             return api_response(
                         message="Payment signature verification failed",
                         message_type="error",

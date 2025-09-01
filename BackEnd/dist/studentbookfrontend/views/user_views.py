@@ -80,13 +80,18 @@ def validate_phone_number(phone_number: str) -> str:
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
-class ClassListAPIView(generics.ListAPIView):
+class ClassListAPIView(APIView):
     # permission_classes = [IsAuthenticated]
     queryset = Class.objects.all()
-    serializer_class = ClassSerializer
-    permission_classes = [AllowAny]
-
-
+    def get(self, request, format=None):
+        classes = Class.objects.all()
+        serializer = ClassSerializer(classes, many=True)    
+        return api_response(
+            message="Class List Data.",
+            message_type="success",
+            status_code=status.HTTP_200_OK,
+            data=serializer.data
+        )
 
 class StudentListAPIView(APIView):
     # permission_classes = [IsAuthenticated]
@@ -104,45 +109,106 @@ class StudentListAPIView(APIView):
 
 # class StudentDetailAPI(APIView):
 #     permission_classes = [IsAuthenticated]
-#     def get(self, request, pk, format=None):
-#         student = get_object_or_404(Student, pk=pk)
+#     def get(self, request, format=None):
+#         student = get_object_or_404(Student, phone_number = request.user)
 #         serializer = StudentSerializer(student)
-#         return Response(serializer.data)
+#         return api_response(
+#                 message="user profile fetched successfully",
+#                 message_type="success",
+#                 status_code=status.HTTP_200_OK,
+#                 data = serializer.data
+#                         )
 
-#     def put(self, request, pk, format=None):
-#         student = get_object_or_404(Student, pk=pk)
-#         serializer = StudentSerializer(student, data=request.data)
+#     def put(self, request, format=None):
+#         student = get_object_or_404(Student,phone_number=request.user)
+#         serializer = StudentSerializer(student, data=request.data, partial=True)
 #         if serializer.is_valid():
 #             serializer.save()
 #             return Response(serializer.data)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-#     def delete(self, request, pk, format=None):
-#         student = get_object_or_404(Student, pk=pk)
-#         student.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class StudentDetailAPI(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request, format=None):
-        student = get_object_or_404(Student, phone_number=request.user)
+
+    def get(self, request,student_id , class_id,format=None):
+        student_class = get_object_or_404(Class, id=class_id)
+        if not student_class:
+            return api_response(
+                message="Class not found",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+                        )
+        student = Student.objects.get(id= student_id, student_class= student_class)
+        if not student:
+            return api_response(
+                message="Student not found",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+                        )
         serializer = StudentSerializer(student)
-        return Response(serializer.data)
 
-    def put(self, request, format=None):
-        student = get_object_or_404(Student,phone_number=request.user)
-        serializer = StudentSerializer(student, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return api_response(
+                message="user profile fetched successfully",
+                message_type="success",
+                status_code=status.HTTP_200_OK,
+                data = serializer.data,
+                        )
 
-    def delete(self, request, format=None):
-        student = get_object_or_404(Student, phone_number=request.user)
-        student.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def put(self, request, student_id, class_id, format=None):
+        student_class = Class.objects.get(id=class_id)
+        if not student_class:
+            return api_response(
+                message="Class not found",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+                        )
 
+        student = Student.objects.get(id= student_id, student_class= student_class)
+        if not student:
+            return api_response(
+                message="Student not found",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+                        )
+
+        # Update only allowed fields except phone_number
+        allowed_fields = [
+            "email", "first_name", "last_name", "school", "profile_image",
+            "is_active", "address", "city", "state", "zip_code", "user_type"
+        ]
+        for field in allowed_fields:
+            if field in request.data:
+                setattr(student, field, request.data[field])
+        student.save()
+        if "phone_number" in request.data and request.data["phone_number"] != student.phone_number:
+            new_phone = request.data["phone_number"]
+
+            if Student.objects.filter(phone_number=new_phone).exists():
+                return api_response(
+                    message="Phone number already in use.",
+                    message_type="error",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Do NOT update yet — just trigger OTP
+            send_otp_newphone_number(student, 'OTP For Phone number change', new_phone)
+
+            # student.save()
+
+            return api_response(
+                                message="For Change Phone Number on School Book an OTP sent to your New Phone Number.",
+                                message_type="success",
+                                status_code=status.HTTP_200_OK
+                            )
+
+        
+        serializer = StudentSerializer(student)
+        return api_response(
+            message="User profile updated successfully",
+            message_type="success",
+            status_code=status.HTTP_200_OK,
+            data=serializer.data
+        )
 
 class LogoutView(APIView):
     
@@ -177,8 +243,6 @@ class LogoutView(APIView):
                 status_code=status.HTTP_400_BAD_REQUEST
                         )
 
-
-
 class ForgotPasswordAPIView(APIView):
     
     def post(self, request, *args, **kwargs):
@@ -203,11 +267,11 @@ class ForgotPasswordAPIView(APIView):
 
         if user:
 
-            send_otp_email(user,'Password Reset OTP')
+            # send_otp_email(user,'Password Reset OTP')
             send_otp_phone_number(user, 'Password Reset OTP')
             
             return api_response(
-                message="For resetting the password an OTP sent to your email.",
+                message="For resetting the password an OTP sent to your Phone number.",
                 message_type="success",
                 status_code=status.HTTP_200_OK
                         )
@@ -356,6 +420,12 @@ class StudentRegisterAPIView(APIView):
                                 message_type="error",
                                 status_code=status.HTTP_400_BAD_REQUEST
                             )
+            if request.data.get('password') != request.data.get('confirm_password'):
+                return api_response(
+                                message="Password and Confirm Password do not match",
+                                message_type="error",
+                                status_code=status.HTTP_400_BAD_REQUEST
+                            )
             customer_register = Student(
                 email=json_data.get("email"),   # optional
                 first_name=json_data.get("first_name"),
@@ -379,7 +449,7 @@ class StudentRegisterAPIView(APIView):
                 send_otp_phone_number(user,subject)
                
                 return api_response(
-                                message="For registering on School Book  an OTP sent to your email.",
+                                message="For registering on School Book  an OTP sent to your Phone Number.",
                                 message_type="success",
                                 status_code=status.HTTP_200_OK
                             )
@@ -415,7 +485,6 @@ class StudentActivationAPIView(APIView):
                             status_code=status.HTTP_400_BAD_REQUEST
                         )
         
-        print('user.otp',user.otp)
         if user.otp == json_data['otp']:
            
             # user.set_password(json_data['password'])
@@ -465,27 +534,6 @@ class ChangePasswordAPIView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-class ChangePasswordAPIView(APIView):
-    permission_classes = [IsAuthenticated]  # user must be logged in
-
-    def post(self, request, *args, **kwargs):
-        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
-
-        if serializer.is_valid():
-            user = request.user
-            new_password = serializer.validated_data['new_password']
-            user.set_password(new_password)  # hashing automatically handled
-            user.save()
-            return api_response(
-                message="Password updated successfully.",
-                message_type="success",
-                status_code=status.HTTP_200_OK
-                        )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class ClassListDemoVideosApi(APIView):
 
     def get(self, request, *args, **kwargs):
@@ -509,3 +557,112 @@ class ClassListDemoVideosApi(APIView):
             data=data
         )
 
+class ResendOtpAPIView(APIView):
+
+    def post(self, request, *args, **kwargs):
+        json_data = request.data
+        phone_number = json_data.get('phone_number',None)
+        if phone_number is None:
+            return api_response(
+                            message="Provide Phone Number",
+                            message_type="error",
+                            status_code=status.HTTP_400_BAD_REQUEST
+                        )
+        try:
+            user = Student.objects.get(phone_number=phone_number)
+        except Student.DoesNotExist:
+            user = None
+
+        if not user:
+            return api_response(
+                            message="User Not Fonund",
+                            message_type="error",
+                            status_code=status.HTTP_400_BAD_REQUEST
+                        )
+        
+        # send_otp_email(user,'Registration OTP')
+        send_otp_phone_number(user,'Registration OTP')
+        return api_response(
+                        message="OTP sent to your Phone Number.",
+                        message_type="success",
+                        status_code=status.HTTP_200_OK
+                    )
+    
+class OtpVerificationAPIView(APIView):
+    permissions_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        json_data = request.data
+        student_id = json_data.get('student_id',None)
+        if student_id is None:
+            return api_response(
+                            message="Provide Student ID",
+                            message_type="error",
+                            status_code=status.HTTP_400_BAD_REQUEST
+                        )
+        
+        otp = json_data.get('otp',None)
+        new_phone_number = json_data.get('new_phone_number',None)
+        if otp is None:
+            return api_response(
+                            message="Provide OTP",
+                            message_type="error",
+                            status_code=status.HTTP_400_BAD_REQUEST
+                        )
+        if new_phone_number is None:
+            try:
+                user = Student.objects.get(id=student_id)
+            except Student.DoesNotExist:
+                user = None
+
+            if not user:
+                return api_response(
+                                message="User Not Fonund",
+                                message_type="error",
+                                status_code=status.HTTP_400_BAD_REQUEST
+                            )
+            
+            if user.otp == otp:
+                user.otp_verified = True
+                user.save()
+                return api_response(
+                                message="OTP Verified Successfully",
+                                message_type="success",
+                                status_code=status.HTTP_200_OK
+                            )
+            else:
+                return api_response(
+                                message="OTP is incorrect",
+                                message_type="error",
+                                status_code=status.HTTP_400_BAD_REQUEST
+                            )
+        else:
+            try:
+                user = Student.objects.get(id=student_id)
+            except Student.DoesNotExist:
+                user = None
+
+            if not user:
+                return api_response(
+                                message="User Not Fonund",
+                                message_type="error",
+                                status_code=status.HTTP_400_BAD_REQUEST
+                            )
+            
+            if user.otp == otp:
+                user.phone_number = new_phone_number
+                user.otp_verified = True
+                user.save()
+                serializer = StudentSerializer(user)
+                return api_response(
+                    message="User profile updated successfully",
+                    message_type="success",
+                    status_code=status.HTTP_200_OK,
+                    data=serializer.data
+                )
+            else:
+                return api_response(
+                                message="OTP is incorrect",
+                                message_type="error",
+                                status_code=status.HTTP_400_BAD_REQUEST
+                            )

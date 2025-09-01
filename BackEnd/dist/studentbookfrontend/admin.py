@@ -60,7 +60,8 @@ class SubTopicAdmin(admin.ModelAdmin):
     list_display = ['id','subtopic_name','topic_name','chapter_name' ,'unit','subject','course']
     list_filter = ['course','subject','unit','chapter_name','topic_name']
     
-
+class GeneralContentAdmin(admin.ModelAdmin):
+    list_display = ['id','title',]
 
 
 admin.site.register(Subject,SubjectAdmin)
@@ -68,5 +69,6 @@ admin.site.register(Unit,UnitAdmin)
 admin.site.register(Chapter,ChapterAdmin)
 admin.site.register(Topic,TopicAdmin)
 admin.site.register(SubTopic,SubTopicAdmin)
+admin.site.register(GeneralContent,GeneralContentAdmin)
 
 

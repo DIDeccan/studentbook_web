@@ -5,7 +5,7 @@ from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, Bl
 from rest_framework.exceptions import AuthenticationFailed,APIException
 from django.contrib.auth import authenticate
 import re
-
+from django.utils import timezone
 # from rest_framework import status
 
 
@@ -58,7 +58,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 data= None
             )
         if user.user_type == 'student':
-            active_tokens = OutstandingToken.objects.filter(user=user,
+            now = timezone.now()
+            active_tokens = OutstandingToken.objects.filter(user=user,expires_at__gt=now 
                                                             ).exclude(
                 id__in=BlacklistedToken.objects.values_list('token_id', flat=True)
             )
@@ -105,7 +106,7 @@ class StudentSerializer(serializers.ModelSerializer):
         model = Student
         fields = ['id', 'email', 'first_name', 'last_name', 'school','profile_image','is_active','phone_number','address','city',
                   'state','zip_code','user_type','school','student_class','student_packages']
-        # fields = '__all__'
+        read_only_fields = ['user_type','student_class', 'student_packages']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

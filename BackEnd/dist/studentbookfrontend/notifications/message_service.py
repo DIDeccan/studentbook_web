@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from studentbookfrontend.helper.api_response import api_response
 
 
 
@@ -74,6 +75,42 @@ def send_otp_phone_number(user,subject_type, phone_number_field="phone_number"):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def send_otp_newphone_number(user,subject_type,new_phone_number, phone_number_field="phone_number"):
+    """
+    Generates an OTP, saves it to user, and sends an email.
+    Works for Student/User model that has fields: otp, otp_created_at
+    """
+
+    # 1. Generate OTP
+    otp = str(random.randint(100000, 999999))
+    user.otp = otp
+    user.otp_created_at = timezone.now()
+    user.save()
+    phone_number = getattr(user, phone_number_field)
+    try:
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        message = client.messages.create(
+            body=f"Your OTP is: {otp} for {subject_type}",
+            from_=settings.TWILIO_PHONE_NUMBER,
+            to='+91'+str(new_phone_number)
+        )
+        return api_response(
+                message=f"OTP sent to {new_phone_number}",
+                message_type="success",
+                status_code=status.HTTP_200_OK,
+                data = {"otp": otp}
+            )
+
+    except Exception as e:
+        # return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return api_response(
+                message=str(e),
+                message_type="error",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 def send_success_email(user, email_field="email"):
     """
