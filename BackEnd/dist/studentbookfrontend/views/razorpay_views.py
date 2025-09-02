@@ -118,7 +118,9 @@ class TransactionAPIView(APIView):
 
 
             data = {
-                "student_package_id": student_package.id
+                "student_package_id": student_package.id,
+                "student_id": student.id,
+                "course_id": student_package.course.id,
             }
             return api_response(
                         message="Transaction verified and course added to student packages",

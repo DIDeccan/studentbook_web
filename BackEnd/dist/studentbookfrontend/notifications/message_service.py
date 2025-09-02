@@ -71,10 +71,19 @@ def send_otp_phone_number(user,subject_type, phone_number_field="phone_number"):
             from_=settings.TWILIO_PHONE_NUMBER,
             to='+91'+str(phone_number)
         )
-        return Response({"message": f"OTP sent to {phone_number}", "otp": otp}, status=status.HTTP_200_OK)
+        return api_response(
+                message=f"OTP sent to {phone_number}",
+                message_type="success",
+                status_code=status.HTTP_200_OK,
+                data = {"otp": otp}
+            )
 
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return api_response(
+                message=str(e),
+                message_type="error",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 def send_otp_newphone_number(user,subject_type,new_phone_number, phone_number_field="phone_number"):
@@ -97,7 +106,7 @@ def send_otp_newphone_number(user,subject_type,new_phone_number, phone_number_fi
             to='+91'+str(new_phone_number)
         )
         return api_response(
-                message=f"OTP sent to {new_phone_number}",
+                message=f"For Change Phone Number on School Book an OTP sent to {new_phone_number}",
                 message_type="success",
                 status_code=status.HTTP_200_OK,
                 data = {"otp": otp}
@@ -179,8 +188,18 @@ def send_succes_message_phone_number(user, phone_number_field="phone_number"):
             from_=settings.TWILIO_PHONE_NUMBER,
             to='+91'+str(phone_number)
         )
-        return Response({"message": f"OTP sent to {phone_number}" }, status=status.HTTP_200_OK)
+        # return Response({"message": f"OTP sent to {phone_number}" }, status=status.HTTP_200_OK)
+        return api_response(
+                message=f"Message sent to {phone_number}",
+                message_type="success",
+                status_code=status.HTTP_200_OK
+            )
 
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return api_response(
+                message=str(e),
+                message_type="error",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
   

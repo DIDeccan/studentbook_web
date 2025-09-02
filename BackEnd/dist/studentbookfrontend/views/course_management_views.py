@@ -1,4 +1,5 @@
 # views.py
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status,permissions
@@ -40,7 +41,24 @@ class MainContentView(APIView):
 
 class SubjectList(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    def get(self, request, class_id):
+    def get(self, request,student_id,class_id):
+        student_class = get_object_or_404(Class, id=class_id)
+        if not student_class:
+            return api_response(
+                message="Class not found",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+                        )
+        try:
+            student = Student.objects.get(id=student_id, student_class=class_id)
+        except Student.DoesNotExist:
+            student = None
+        if not student:
+            return api_response(
+                message="Student not found",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+                        )
         try:
             subjects = Subject.objects.filter(course_id=class_id)
             serializer = SubjectSerializer(subjects, many=True)

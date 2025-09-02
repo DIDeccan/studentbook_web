@@ -8,7 +8,7 @@ urlpatterns = [
  
     path('login', CustomTokenObtainPairView.as_view()),
     path('logout', LogoutView.as_view()),
-    path('token_refresh', TokenRefreshView.as_view()),
+    path('token_refresh', CustomTokenRefreshView.as_view()),
     path('user-forgot-password', ForgotPasswordAPIView.as_view()),
     path('student-register', StudentRegisterAPIView.as_view()),
     path('student-activation', StudentActivationAPIView.as_view()),    

@@ -13,11 +13,18 @@ class CustomAPIException(APIException):
     status_code = 400
 
     def __init__(self, message, message_type="error", data=None):
-        self.detail = {
-            "message": message,
-            "message_type": message_type,
-            "data": data
-        }
+        if data is None:
+            data = {}
+            self.detail = {
+                "message": message,
+                "message_type": message_type,
+            }
+        else:
+            self.detail = {
+                "message": message,
+                "message_type": message_type,
+                "data": data
+            }
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -57,6 +64,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 message_type= "error",
                 data= None
             )
+        
+        #         # Delete everything in BlacklistedToken
+        # BlacklistedToken.objects.all().delete()
+
+        # # Delete everything in OutstandingToken
+        # OutstandingToken.objects.all().delete()
+    
+        
         if user.user_type == 'student':
             now = timezone.now()
             active_tokens = OutstandingToken.objects.filter(user=user,expires_at__gt=now 
@@ -66,11 +81,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
             if active_tokens.exists():
                 # raise AuthenticationFailed("User already logged in on another device.")
+                print("Active tokens found:", active_tokens)
                 raise CustomAPIException(
                     message= "User already logged in on another device",
                     message_type= "error",
                     data= None
                 )
+                
+            
   
 
         # Add custom claims
@@ -78,6 +96,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['user_type'] = self.user.user_type
         data['is_active'] = self.user.is_active
         data['message_type'] = "success"
+        if user.user_type == 'student':
+            data['student_id'] = user.student.id if hasattr(user, 'student') else None
+            data['is_paid'] = StudentPackage.objects.filter(student=user).exists()
 
         return data
 
