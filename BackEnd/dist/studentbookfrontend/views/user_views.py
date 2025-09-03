@@ -333,13 +333,44 @@ class ForgotPasswordAPIView(APIView):
         else:
             user = User.objects.filter(phone_number=user_name).first()
 
+        if user is None:
+            return api_response(
+                message="User not found.",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+                        )
+
         otp = json_data.get("otp")
-        print(otp)
         new_password = json_data.get("new_password")
         confirm_new_password = json_data.get("confirm_new_password")
+        # Step 1: Verify OTP
+        if otp and not new_password and not confirm_new_password:
+            if not all([user, otp]):
+                return api_response(
+                message="User and Otp are required.",
+                message_type="error",
+                status_code=status.HTTP_400_BAD_REQUEST
+                        )
 
-        if otp and new_password and confirm_new_password:
-            if not all([user_name, otp, new_password, confirm_new_password]):
+
+            if user.otp == otp:
+                user.otp_verified = True
+                return api_response(
+                message=" Otp verified successfully.",
+                message_type="success",
+                status_code=status.HTTP_200_OK
+                        )
+
+            else:
+                return api_response(
+                message="Invalid email or OTP not verified.",
+                message_type="error",
+                status_code=status.HTTP_400_BAD_REQUEST
+                        )
+
+
+        if  new_password and confirm_new_password:
+            if not all([new_password, confirm_new_password]):
                 # return Response({"message": "All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
                 return api_response(
                 message="All fields are required.",
@@ -356,17 +387,12 @@ class ForgotPasswordAPIView(APIView):
                         )
 
             # user = User.objects.filter(email=user_name, otp=otp).first()
-            if user.otp == otp:
+            if user and user.otp_verified:
                 user.set_password(new_password)
-                user.otp = None
-                user.otp_verified = True 
+                user.otp_verified = True
+                user.otp = None  # Clear OTP after successful password reset
                 user.save()
-                # return Response({"message": "Password reset successfully."}, status=status.HTTP_200_OK)
-                return api_response(
-                message="Password reset successfully.",
-                message_type="success",
-                status_code=status.HTTP_200_OK
-                        )
+
 
             else:
                 # return Response({"message": "Invalid email or OTP not verified."}, status=status.HTTP_400_BAD_REQUEST)
