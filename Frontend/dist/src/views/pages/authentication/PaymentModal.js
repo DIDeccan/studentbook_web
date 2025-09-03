@@ -63,30 +63,46 @@ const PaymentModal = ({ isOpen, toggle, classInfo }) => {
 
           const verifyData = verifyRes.data?.data;
           if (!verifyData) throw new Error("Payment verification returned no data");
-          const existingUser = JSON.parse(localStorage.getItem("userData")) || userData || {};
+          // const existingUser = JSON.parse(localStorage.getItem("userData")) || userData || {};
 
-          const updatedUser = {
-            ...existingUser,
-            student_id: verifyData.student_id,
-            student_package_id: verifyData.student_package_id,
-            student_class: verifyData.course_id,
-          };
-          localStorage.setItem("userData", JSON.stringify(updatedUser));
-          dispatch(updateUserData(updatedUser));
-
+          // const updatedUser = {
+          //   ...existingUser,
+          //   student_id: verifyData.student_id,
+          //   student_package_id: verifyData.student_package_id,
+          //   student_class: verifyData.course_id,
+          // };
+          // localStorage.setItem("userData", JSON.stringify(updatedUser));
+          // dispatch(updateUserData(updatedUser));
+   dispatch(
+            updateUserData({
+              is_paid: true,
+              student_id: verifyData.student_id,
+              student_package_id: verifyData.student_package_id,
+              // Keep both for compatibility with createOrder and anywhere else:
+              student_class: verifyData.course_id,
+              course_id: verifyData.course_id,
+            })
+          );
           toast.success("Payment successful!");
           ability.update([{ action: "manage", subject: "all" }]);
           toggle();
           // Navigate user based on role
-          const role = verifyRes.data?.data?.user?.role || "student";
-          navigate(getHomeRouteForLoggedInUser(role));
+          // const role = verifyRes.data?.data?.user?.role || "student";
+          // navigate(getHomeRouteForLoggedInUser(role));
+         const role = verifyData?.user_type || userData?.user_type || registrationData?.user_type || "student";
+         navigate(getHomeRouteForLoggedInUser(role));
         } catch (err) {
           toast.error("Payment verification failed. Please try again.");
+          dispatch(createOrder());
         }
       },
     };
 
     const rzp = new window.Razorpay(options);
+ rzp.on("payment.failed", () => {
+      toast.error("Payment failed. Please try again.");
+      dispatch(createOrder()); 
+    });
     rzp.open();
   };
 

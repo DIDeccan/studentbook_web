@@ -11,10 +11,11 @@ const PrivateRoute = ({ children, route }) => {
 
 
   if (!user) {
-    user = safeParseLocalStorage('authData')?.user
+    user = safeParseLocalStorage('authData')?.user || null
+    
   }
-const action = route?.meta?.action || null
-const resource = route?.meta?.resource || null
+// const action = route?.meta?.action || null
+// const resource = route?.meta?.resource || null
 const restrictedRoute = route?.meta?.restricted || false
 
 

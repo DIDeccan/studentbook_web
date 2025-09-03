@@ -33,7 +33,7 @@ const LoginBasic = ({ isOpen, toggle, openRegister }) => {
 
 
         dispatch(updateUserData(user));
-        localStorage.setItem("userData", JSON.stringify(user));
+        localStorage.setItem("authData", JSON.stringify(user));
 
         ability.update([{ action: 'manage', subject: 'all' }]);
         toast.success("Login successful!");
@@ -44,9 +44,15 @@ const LoginBasic = ({ isOpen, toggle, openRegister }) => {
         navigate(getHomeRouteForLoggedInUser(role));
 
       } else {
-        setError("username", { type: "manual", message: resultAction.payload?.message || "Login failed" });
-        toast.error(resultAction.payload?.message || "Login failed");
-      }
+        const message = resultAction.payload?.message || "Login failed";
+
+  if (message?.toLowerCase().includes("password")) {
+    setError("password", { type: "manual", message });
+  } else {
+    setError("username", { type: "manual", message });
+  }
+   toast.error(message);
+}
     } catch (err) {
       toast.dismiss();
       toast.error("Something went wrong");

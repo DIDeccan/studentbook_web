@@ -67,7 +67,7 @@ export const createOrder = createAsyncThunk("auth/createOrder", async (_, { getS
     const { accessToken, userData, registrationData } = auth;
 
     if (!accessToken) return rejectWithValue("User not authenticated.");
-    if (!registrationData) return rejectWithValue("Registration data missing.");
+    if (!registrationData && !userData) return rejectWithValue("Registration data missing.");
 
     const studentClass = registrationData?.student_class || userData?.student_class;
     if (!studentClass) return rejectWithValue("Student class missing.");
@@ -92,12 +92,24 @@ export const loginUser = createAsyncThunk(
     try {
 
       const res = await api.post(API_ENDPOINTS.AUTH.LOGIN, { phone_number, password });
-      const { access, refresh, user_type, student_id, is_paid } = res.data;
+      // const { access, refresh, user_type, student_id, is_paid } = res.data;
 
-      const userData = { accessToken: access, refreshToken: refresh, user_type, student_id, is_paid };
-      localStorage.setItem("userData", JSON.stringify(userData));
-
-      return userData;
+      // const userData = { accessToken: access, refreshToken: refresh, user_type, student_id, is_paid };
+      // localStorage.setItem("userData", JSON.stringify(userData));
+const { access, refresh, user_type, student_id, is_paid, course_id, student_package_id } = res.data;
+const user = {
+        user_type,
+        is_paid: !!is_paid,
+        student_id: student_id ?? null,
+        course_id: course_id ?? null,
+        student_package_id: student_package_id ?? null,
+      };  
+       const authData = saveAuthData({
+        accessToken: access,
+        refreshToken: refresh,
+        user,
+      });    
+return authData;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Login failed" });
     }
@@ -149,30 +161,41 @@ export const logoutUser = createAsyncThunk("auth/logoutUser", async (_, { getSta
 });
 
 // --- Slice ---
-const initialAuthData = safeParseLocalStorage("authData");
-
-const authSlice = createSlice({
-  name: "auth",
-  initialState: {
+// const initialAuthData = safeParseLocalStorage("authData");
+ const initialState = {
     loading: false,
     error: null,
     success: null,
     registrationData: null,
     otpVerified: false,
     orderData: null,
-    accessToken: initialAuthData?.accessToken || null,
-    refreshToken: initialAuthData?.refreshToken || null,
-    userData: initialAuthData?.user || null,
-  },
+    // accessToken: initialAuthData?.accessToken || null,
+    // refreshToken: initialAuthData?.refreshToken || null,
+    // userData: initialAuthData?.user || null,
+    accessToken: safeParseLocalStorage("authData")?.accessToken || null,
+  refreshToken: safeParseLocalStorage("authData")?.refreshToken || null,
+  userData: safeParseLocalStorage("authData")?.user || null,
+  }
+const authSlice = createSlice({
+  name: "auth",
+ initialState,
   reducers: {
     logout: (state) => {
-      state.registrationData = null;
-      state.accessToken = null;
-      state.refreshToken = null;
-      state.otpVerified = false;
-      state.orderData = null;
-      state.userData = null;
-      Object.assign(state, initialState, { accessToken: null, refreshToken: null, userData: null });
+      // state.registrationData = null;
+      // state.accessToken = null;
+      // state.refreshToken = null;
+      // state.otpVerified = false;
+      // state.orderData = null;
+      // state.userData = null;
+      // Object.assign(state, initialState, { accessToken: null, refreshToken: null, userData: null });
+        Object.assign(state, initialState, {
+        accessToken: null,
+        refreshToken: null,
+        userData: null,
+        registrationData: null,
+        otpVerified: false,
+        orderData: null,
+      });
       localStorage.removeItem("authData");
     },
      updateUserData: (state, action) => {
@@ -181,7 +204,7 @@ const authSlice = createSlice({
     const existingAuthData = JSON.parse(localStorage.getItem("authData")) || {};
     localStorage.setItem(
       "authData",
-      JSON.stringify({ ...existingAuthData, user: { ...existingAuthData.user, ...updatedUser } })
+      JSON.stringify({ ...existingAuthData, user: { ...(existingAuthData.user || {}), ...updatedUser } })
     );
   },
   },
@@ -208,8 +231,13 @@ const authSlice = createSlice({
 
         const tokens = action.payload.data || {};
         if (tokens.access && tokens.refresh) {
-          const user = state.registrationData || { role: "student" };
-          const authData = saveAuthData({ accessToken: tokens.access, refreshToken: tokens.refresh, user });
+          // const user = state.registrationData || { role: "student" };
+      const baseUser = {
+            user_type: state.registrationData?.user_type || "student",
+            student_class: state.registrationData?.student_class || null,
+            is_paid: false,
+          };
+          const authData = saveAuthData({ accessToken: tokens.access, refreshToken: tokens.refresh, user: baseUser });
 
           state.accessToken = authData.accessToken;
           state.refreshToken = authData.refreshToken;
@@ -263,24 +291,40 @@ const authSlice = createSlice({
       // Logout
       .addCase(logoutUser.pending, (state) => { state.loading = true; state.error = null })
       .addCase(logoutUser.fulfilled, (state) => {
-        state.loading = false;
-        state.registrationData = null;
-        state.accessToken = null;
-        state.refreshToken = null;
-        state.otpVerified = false;
-        state.orderData = null;
-        state.userData = null;
+        // state.loading = false;
+        // state.registrationData = null;
+        // state.accessToken = null;
+        // state.refreshToken = null;
+        // state.otpVerified = false;
+        // state.orderData = null;
+        // state.userData = null;
+           Object.assign(state, initialState, {
+          accessToken: null,
+          refreshToken: null,
+          userData: null,
+          registrationData: null,
+          otpVerified: false,
+          orderData: null,
+        });
         localStorage.removeItem("authData");
         toast.success("Logout successful");
       })
       .addCase(logoutUser.rejected, (state, action) => {
-        state.loading = false;
-        state.registrationData = null;
-        state.accessToken = null;
-        state.refreshToken = null;
-        state.otpVerified = false;
-        state.orderData = null;
-        state.userData = null;
+        // state.loading = false;
+        // state.registrationData = null;
+        // state.accessToken = null;
+        // state.refreshToken = null;
+        // state.otpVerified = false;
+        // state.orderData = null;
+        // state.userData = null;
+           Object.assign(state, initialState, {
+          accessToken: null,
+          refreshToken: null,
+          userData: null,
+          registrationData: null,
+          otpVerified: false,
+          orderData: null,
+        });
         localStorage.removeItem("authData");
         toast.error(action.payload || "Logout failed");
       });

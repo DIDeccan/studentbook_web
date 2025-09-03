@@ -37,7 +37,7 @@ const defaultValues = {
   accepted: false,
 };
 
-const Register = ({ isOpen, toggle, openPayment, selectedClass }) => {
+const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => {
   const ability = useContext(AbilityContext)
   const dispatch = useDispatch();
   const { registrationData, accessToken, orderData } = useSelector((state) => state.auth);

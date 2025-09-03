@@ -13,26 +13,16 @@ const UserDropdown = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   // const [userData, setUserData] = useState(null);
-const userData = useSelector((state) => state.auth.userData);
+// const userData = useSelector((state) => state.auth.userData);
+  const authData = safeParseLocalStorage("authData");
+  const user = authData?.user;
 
-//   useEffect(() => {
-//     console.log("--- UserDropdown mounted ---");
-//     const authData = safeParseLocalStorage("authData");
-//     console.log("AuthData from localStorage:", authData);
-// if (authData?.user) {
-//       setUserData(authData.user);
-//       console.log("User data set:", authData.user);
-//     } else {
-//       console.log("No user found in localStorage");
-//     }
-//   }, []);
-
-  const userAvatar = userData?.avatar || defaultAvatar;
+  const userAvatar = user?.avatar || defaultAvatar;
 
   
  const handleLogout = async () => {
     console.log("Logging out user...");
-    console.log("Redux userData before logout:", userData);
+    console.log("Redux userData before logout:", authData);
 
     try {
       const resultAction = await dispatch(logoutUser());
