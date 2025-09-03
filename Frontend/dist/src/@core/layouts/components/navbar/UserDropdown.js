@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Avatar from "@components/avatar";
 import { isUserLoggedIn } from "@utils";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Power, Settings } from "react-feather";
 import { UncontrolledDropdown, DropdownMenu, DropdownToggle, DropdownItem } from "reactstrap";
 import defaultAvatar from "@src/assets/images/portrait/small/avatar-s-11.jpg";
@@ -12,22 +12,46 @@ import { safeParseLocalStorage } from "../../../../utils/storage";
 const UserDropdown = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
+  // const [userData, setUserData] = useState(null);
+const userData = useSelector((state) => state.auth.userData);
 
-  useEffect(() => {
-    if (isUserLoggedIn() !== null) {
-      // setUserData(JSON.parse(localStorage.getItem("userData")));
-      setUserData(safeParseLocalStorage("userData"))
-    }
-  }, []);
+//   useEffect(() => {
+//     console.log("--- UserDropdown mounted ---");
+//     const authData = safeParseLocalStorage("authData");
+//     console.log("AuthData from localStorage:", authData);
+// if (authData?.user) {
+//       setUserData(authData.user);
+//       console.log("User data set:", authData.user);
+//     } else {
+//       console.log("No user found in localStorage");
+//     }
+//   }, []);
 
   const userAvatar = userData?.avatar || defaultAvatar;
 
-  const handleLogout = async () => {
-    await dispatch(logoutUser());
-    navigate("/login");
-  };
+  
+ const handleLogout = async () => {
+    console.log("Logging out user...");
+    console.log("Redux userData before logout:", userData);
 
+    try {
+      const resultAction = await dispatch(logoutUser());
+
+      console.log("logoutUser dispatch result:", resultAction);
+
+      if (logoutUser.fulfilled.match(resultAction)) {
+        console.log("Logout successful. Clearing state and redirecting...");
+        navigate("/login");
+      } else {
+        console.error("Logout failed. Payload:", resultAction.payload);
+      }
+    } catch (err) {
+      console.error("Logout thunk threw error:", err);
+    }
+
+    // Double check localStorage cleanup
+    console.log("LocalStorage after logout:", localStorage);
+  };
   return (
     <UncontrolledDropdown tag="li" className="dropdown-user nav-item">
       <DropdownToggle href="/" tag="a" className="nav-link dropdown-user-link" onClick={(e) => e.preventDefault()}>

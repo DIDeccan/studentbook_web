@@ -6,13 +6,19 @@ import { safeParseLocalStorage } from '../utils/storage'
  * e.g. If you are using cookies to store the application please update this function
  */
 // eslint-disable-next-line arrow-body-style
+// export const isUserLoggedIn = () => {
+//   return localStorage.getItem('userData') && localStorage.getItem(useJwt.jwtConfig.storageTokenKeyName)
+// }
+
 export const isUserLoggedIn = () => {
-  return localStorage.getItem('userData') && localStorage.getItem(useJwt.jwtConfig.storageTokenKeyName)
-}
-
+  return !!getUserData();
+};
 // export const getUserData = () => JSON.parse(localStorage.getItem('userData'))
-export const getUserData = () => safeParseLocalStorage("userData")
-
+// export const getUserData = () => safeParseLocalStorage("userData")
+export const getUserData = () => {
+  const auth = safeParseLocalStorage("authData");
+  return auth?.user || null;
+};
 /**
  * This function is used for demo purpose route navigation
  * In real app you won't need this function because your app will navigate to same route for each users regardless of ability

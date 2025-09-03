@@ -27,10 +27,12 @@ const Router = () => {
   const { layout } = useLayout()
 
   const allRoutes = getRoutes(layout)
-  const getHomeRoute = () => {
+
     const user = getUserData()
+  const getHomeRoute = () => {
+  
     if (user) {
-      return getHomeRouteForLoggedInUser(user.role)
+      return getHomeRouteForLoggedInUser(user.user_type)
     } else {
       return '/login'
     }

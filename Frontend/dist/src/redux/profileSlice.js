@@ -4,62 +4,112 @@ import API_ENDPOINTS from "@src/apis/endpoints";
 import toast from "react-hot-toast";
 import { safeParseLocalStorage } from "../utils/storage";
 
-// --- Thunks ---
-// 1. Fetch Profile
-export const fetchProfile = createAsyncThunk(
-  "profile/fetchProfile",
-  async (_, { getState, rejectWithValue }) => {
+const resolveIds = (studentId, classId, state) => {
+  const profile = state.studentProfile?.data;
+  return {
+    studentId: studentId || profile?.student_id,
+    classId: classId || profile?.course_id 
+  };
+};
+
+// ------------------- Thunks -------------------
+
+// Fetch Student Profile
+export const fetchStudentProfile = createAsyncThunk(
+  "studentProfile/fetch",
+  async ({ studentId, classId }, { getState, rejectWithValue }) => {
     try {
-    const token = getState().auth.accessToken || localStorage.getItem("accessToken");
-    if (!token) return rejectWithValue("No access token");
-      const res = await api.get(API_ENDPOINTS.STUDENTS.PROFILE, {
-        headers: { Authorization: `Bearer ${token}` },
+      const token =
+        getState().auth?.accessToken || localStorage.getItem("accessToken");
+      if (!token) return rejectWithValue("No auth token found");
+
+      const { studentId: sid, classId: cid } = resolveIds(
+        studentId,
+        classId,
+        getState()
+      );
+      if (!sid || !cid)
+        return rejectWithValue("Missing studentId or classId (course_id)");
+
+
+      const res = await api.get(API_ENDPOINTS.STUDENTS.PROFILE(sid, cid), {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      console.log("API Response:", res);
-      return res.data;
+
+      return res.data; 
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to fetch profile");
+      return rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-// 2. Update Profile 
-export const updateProfile = createAsyncThunk(
-  "profile/updateProfile",
-  async (payload, { rejectWithValue }) => {
+// Update Student Profile
+export const updateStudentProfile = createAsyncThunk(
+  "studentProfile/update",
+  async ({ studentId, classId, payload }, { getState, rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await api.put(API_ENDPOINTS.STUDENTS.PROFILE, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const token =
+        getState().auth?.accessToken || localStorage.getItem("accessToken");
+      if (!token) return rejectWithValue("No auth token found");
 
-      toast.success("Profile updated");
+      const { studentId: sid, classId: cid } = resolveIds(
+        studentId,
+        classId,
+        getState()
+      );
+      if (!sid || !cid)
+        return rejectWithValue("Missing studentId or classId (course_id)");
+
+      const res = await api.put(
+        API_ENDPOINTS.STUDENTS.PROFILE(sid, cid),
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      toast.success("Profile updated successfully");
       return res.data;
     } catch (err) {
-      toast.error("Failed to update");
+      toast.error("Failed to update profile");
       return rejectWithValue(err.response?.data || "Update failed");
     }
   }
 );
 
-// 3. Upload Profile Image
-export const uploadProfileImage = createAsyncThunk(
-  "profile/uploadProfileImage",
-  async (file, { rejectWithValue }) => {
+// Upload Student Profile Image
+export const uploadStudentProfileImage = createAsyncThunk(
+  "studentProfile/uploadImage",
+  async ({ studentId, classId, file }, { getState, rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token =
+        getState().auth?.accessToken || localStorage.getItem("accessToken");
+      if (!token) return rejectWithValue("No auth token found");
+
+      const { studentId: sid, classId: cid } = resolveIds(
+        studentId,
+        classId,
+        getState()
+      );
+      if (!sid || !cid)
+        return rejectWithValue("Missing studentId or classId (course_id)");
+
       const formData = new FormData();
       formData.append("profile_image", file);
 
-      const res = await api.put(API_ENDPOINTS.STUDENTS.PROFILE, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const res = await api.put(
+        API_ENDPOINTS.STUDENTS.PROFILE(sid, cid),
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
 
       toast.success("Profile picture updated");
       return res.data;
@@ -70,68 +120,81 @@ export const uploadProfileImage = createAsyncThunk(
   }
 );
 
-// --- Slice ---
+// ------------------- Slice -------------------
 const profileSlice = createSlice({
-  name: "profile",
+  name: "studentProfile",
   initialState: {
+    data: safeParseLocalStorage("studentProfileData") || null,
     loading: false,
-    error: null,
-    data: safeParseLocalStorage("profileData")
+    error: null
   },
   reducers: {
-    clearProfile: (state) => {
+    clearStudentProfile: (state) => {
       state.data = null;
-      localStorage.removeItem("profileData");
-    },
+      localStorage.removeItem("studentProfileData");
+    }
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Profile
-      .addCase(fetchProfile.pending, (state) => {
+      // Fetch
+      .addCase(fetchStudentProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchProfile.fulfilled, (state, action) => {
-        state.loading = false;
-        state.data = action.payload;
-        localStorage.setItem("profileData", JSON.stringify(state.data));
-      })
-      .addCase(fetchProfile.rejected, (state, action) => {
+    .addCase(fetchStudentProfile.fulfilled, (state, action) => {
+
+  state.loading = false;
+  state.data = action.payload.data; 
+
+  localStorage.setItem(
+    "studentProfileData",
+    JSON.stringify(state.data)
+  );
+
+})
+
+      .addCase(fetchStudentProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      // Update Profile
-      .addCase(updateProfile.pending, (state) => {
+      // Update
+      .addCase(updateStudentProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateProfile.fulfilled, (state, action) => {
+      .addCase(updateStudentProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
-        localStorage.setItem("profileData", JSON.stringify(action.payload));
+        state.data = action.payload?.data || action.payload;
+        localStorage.setItem(
+          "studentProfileData",
+          JSON.stringify(state.data)
+        );
       })
-      .addCase(updateProfile.rejected, (state, action) => {
+      .addCase(updateStudentProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
       // Upload Image
-      .addCase(uploadProfileImage.pending, (state) => {
+      .addCase(uploadStudentProfileImage.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(uploadProfileImage.fulfilled, (state, action) => {
+      .addCase(uploadStudentProfileImage.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
-        localStorage.setItem("profileData", JSON.stringify(action.payload));
+        state.data = action.payload?.data || action.payload;
+        localStorage.setItem(
+          "studentProfileData",
+          JSON.stringify(state.data)
+        );
       })
-      .addCase(uploadProfileImage.rejected, (state, action) => {
+      .addCase(uploadStudentProfileImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
-  },
+  }
 });
 
-export const { clearProfile } = profileSlice.actions;
+export const { clearStudentProfile } = profileSlice.actions;
 export default profileSlice.reducer;

@@ -1,7 +1,7 @@
 import {useState, useEffect, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSkin } from '@hooks/useSkin'
-import { useDispatch } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { useForm, Controller } from 'react-hook-form'
 import useJwt from '@src/auth/jwt/useJwt'
 import toast from 'react-hot-toast'
@@ -10,6 +10,7 @@ import { AbilityContext } from '@src/utility/context/Can'
 import Avatar from '@components/avatar'
 import InputPasswordToggle from '@components/input-password-toggle'
 import { getHomeRouteForLoggedInUser } from '@utils'
+import { fetchClasses } from '../../../redux/classSlice'
 
 import {
   Container,
@@ -71,7 +72,7 @@ const Login = () => {
     handleSubmit,
     formState: { errors }
   } = useForm({ defaultValues })
-
+const { data: classes } = useSelector((state) => state.classes);
   const source = skin === 'dark' ? illustrationsDark : illustrationsLight
 
    const [modalOpen, setModalOpen] = useState(false)
@@ -82,6 +83,11 @@ const Login = () => {
   
 const [registerOpen, setRegisterOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
+
+    useEffect(() => {
+    dispatch(fetchClasses());
+  }, [dispatch]);
   return (
     <div>
     <div className="hero-wrapper" style={{ height: '75px' }}>
@@ -135,20 +141,25 @@ const [registerOpen, setRegisterOpen] = useState(false);
 
         <div>
         
-          <Button
-    outline
-    color="primary"
-    className="me-2"
-    onClick={() => {
-      const token = localStorage.getItem("accessToken"); 
+  <Button
+  outline
+  color="primary"
+  className="me-2"
+  onClick={() => {
+    const storedAuth = localStorage.getItem("authData");
+    const token = storedAuth ? JSON.parse(storedAuth)?.accessToken : null;
 
-      if (token) {
-        setPaymentOpen(true);
-      } else {
-        setRegisterOpen(true);
-      }
-    }}
-  >
+    if (classes && classes.length > 0) {
+      setSelectedClass(classes[0]); 
+    }
+
+    if (token) {
+      setPaymentOpen(true);
+    } else {
+      setRegisterOpen(true);
+    }
+  }}
+>
     Sign Up
   </Button>
             <Button color="primary" className="me-2" onClick={toggleLoginModal}>Log In</Button>
@@ -161,11 +172,13 @@ const [registerOpen, setRegisterOpen] = useState(false);
     setRegisterOpen(false);
     setPaymentOpen(true);
   }}
+   selectedClass={selectedClass} 
 />
 
 <PaymentModal
   isOpen={paymentOpen}
   toggle={() => setPaymentOpen(!paymentOpen)}
+  classInfo={selectedClass} 
 />
 
       <LoginBasic

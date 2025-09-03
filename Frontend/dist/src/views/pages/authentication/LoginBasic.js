@@ -5,12 +5,12 @@ import { useState, useContext } from "react";
 import { AbilityContext } from '@src/utility/context/Can';
 import { useForm, Controller } from "react-hook-form";
 import InputPasswordToggle from "@components/input-password-toggle";
-import { loginUser } from "@store/authentication";
-import { getHomeRouteForLoggedInUser } from '@utils'; 
+import { loginUser, updateUserData } from "@store/authentication";
+import { getHomeRouteForLoggedInUser } from '@utils';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Label, Input, Form, FormFeedback } from "reactstrap";
 
 const LoginBasic = ({ isOpen, toggle, openRegister }) => {
-  const ability = useContext(AbilityContext)
+  const ability = useContext(AbilityContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading } = useSelector((state) => state.auth);
@@ -29,14 +29,20 @@ const LoginBasic = ({ isOpen, toggle, openRegister }) => {
       toast.dismiss();
 
       if (loginUser.fulfilled.match(resultAction)) {
-        const user = resultAction.payload.user;
+        const user = resultAction.payload;
 
+
+        dispatch(updateUserData(user));
+        localStorage.setItem("userData", JSON.stringify(user));
 
         ability.update([{ action: 'manage', subject: 'all' }]);
         toast.success("Login successful!");
+
         toggle();
-          const role = user?.user_type || "student";
-    navigate(getHomeRouteForLoggedInUser(role));
+
+        const role = user.user_type || "student";
+        navigate(getHomeRouteForLoggedInUser(role));
+
       } else {
         setError("username", { type: "manual", message: resultAction.payload?.message || "Login failed" });
         toast.error(resultAction.payload?.message || "Login failed");
@@ -78,14 +84,13 @@ const LoginBasic = ({ isOpen, toggle, openRegister }) => {
             {errors.password && <FormFeedback>{errors.password.message}</FormFeedback>}
           </div>
 
-           <div className="d-flex justify-content-between align-items-center mb-3">
-              <div className="form-check">
-                <Input type="checkbox" id="rememberMe" className="form-check-input" />
-                <Label className="form-check-label" for="rememberMe">Remember me</Label>
-              </div>
-              <a href="#" className="text-primary small" onClick={(e) => { e.preventDefault(); toggle(); setForgotOpen(true); }}>Forgot password?</a>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="form-check">
+              <Input type="checkbox" id="rememberMe" className="form-check-input" />
+              <Label className="form-check-label" for="rememberMe">Remember me</Label>
             </div>
-
+            <a href="#" className="text-primary small" onClick={(e) => { e.preventDefault(); toggle(); /* open forgot password modal */ }}>Forgot password?</a>
+          </div>
 
           <Button color="primary" block type="submit" disabled={loading}>
             {loading ? "Logging in..." : "Log In"}

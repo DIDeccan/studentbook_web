@@ -3,7 +3,7 @@ import { Fragment, useState, useEffect } from 'react'
 
 // ** Third Party Components
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProfile } from "../../../redux/profileSlice";
+import { fetchStudentProfile } from "../../../redux/profileSlice";
 import axios from "axios";
 
 // ** Custom Components
@@ -28,19 +28,31 @@ import '@styles/react/pages/page-profile.scss'
 
 const Profile = () => {
 
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const profileState = useSelector((state) => state.profile ?? { data: null, loading: false });
-const profile = profileState.data;
-const loading = profileState.loading;
+  const { data: profile, loading } = profileState;
+  const userData = useSelector((state) => state.auth?.userData);
 
-    useEffect(() => {
-    if (!profile) dispatch(fetchProfile());
-  }, [dispatch, profile]);
+  const studentId = userData?.student_id;
+  const classId = userData?.course_id || userData?.student_class || profile?.student_packages?.[0]?.course_id;
+
+  useEffect(() => {
+    if (studentId && classId) {
+      dispatch(fetchStudentProfile({ studentId, classId }));
+    } else {
+    }
+  }, [dispatch, studentId, classId]);
+
+  useEffect(() => {
+    console.log("Profile state changed:", profileState);
+  }, [profileState]);
+
+
   return (
     <Fragment>
       <Breadcrumbs title='Profile' data={[{ title: 'Pages' }, { title: 'Profile' }]} />
-             <div id="user-profile">
-        {loading && !profile ?(
+      <div id="user-profile">
+        {loading && !profile ? (
           <UILoader blocking={true} />
         ) : (
           <>
