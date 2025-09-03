@@ -6,7 +6,7 @@ from rest_framework.exceptions import AuthenticationFailed,APIException
 from django.contrib.auth import authenticate
 import re
 from django.utils import timezone
-# from rest_framework import status
+from rest_framework import status
 
 
 class CustomAPIException(APIException):
@@ -73,6 +73,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     
         
         if user.user_type == 'student':
+            if not StudentPackage.objects.filter(student=user).exists():
+                raise CustomAPIException(
+                    message= "Please subscribe to a package to login.",
+                    message_type= "error",
+                    # status_code = status.HTTP_403_FORBIDDEN,
+                )
             now = timezone.now()
             active_tokens = OutstandingToken.objects.filter(user=user,expires_at__gt=now 
                                                             ).exclude(
