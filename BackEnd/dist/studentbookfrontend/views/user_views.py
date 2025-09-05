@@ -23,6 +23,8 @@ from studentbookfrontend.helper.api_response import api_response
 import random
 from studentbookfrontend.models import *
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+
 # from rest_framework.exceptions import ValidationError
 
 # Create your views here.
@@ -109,7 +111,7 @@ class ClassListAPIView(APIView):
     # permission_classes = [IsAuthenticated]
     queryset = Class.objects.all()
     def get(self, request, format=None):
-        classes = Class.objects.all()
+        classes = Class.objects.all().order_by('id')
         serializer = ClassSerializer(classes, many=True)    
         return api_response(
             message="Class List Data.",
@@ -334,13 +336,37 @@ class ForgotPasswordAPIView(APIView):
             user = User.objects.filter(phone_number=user_name).first()
 
         otp = json_data.get("otp")
-        print(otp)
         new_password = json_data.get("new_password")
         confirm_new_password = json_data.get("confirm_new_password")
 
-        if otp and new_password and confirm_new_password:
-            if not all([user_name, otp, new_password, confirm_new_password]):
-                # return Response({"message": "All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+        # Step 1: Verify OTP
+        if otp and not new_password and not confirm_new_password:
+            if not all([user, otp]):
+                return api_response(
+                message="User and Otp are required.",
+                message_type="error",
+                status_code=status.HTTP_400_BAD_REQUEST
+                        )
+
+
+            if user.otp == otp:
+                user.otp_verified = True
+                return api_response(
+                message=" Otp verified successfully.",
+                message_type="success",
+                status_code=status.HTTP_200_OK
+                        )
+
+            else:
+                return api_response(
+                message="Invalid email or OTP not verified.",
+                message_type="error",
+                status_code=status.HTTP_400_BAD_REQUEST
+                        )
+
+
+        if not otp and new_password and confirm_new_password:
+            if not all([ new_password, confirm_new_password]):
                 return api_response(
                 message="All fields are required.",
                 message_type="error",
@@ -354,31 +380,19 @@ class ForgotPasswordAPIView(APIView):
                 message_type="error",
                 status_code=status.HTTP_400_BAD_REQUEST
                         )
-
-            # user = User.objects.filter(email=user_name, otp=otp).first()
-            if user.otp == otp:
+            if user and user.otp_verified:
                 user.set_password(new_password)
-                user.otp = None
-                user.otp_verified = True 
+                user.otp_verified = True
+                user.otp = None  # Clear OTP after successful password reset
                 user.save()
-                # return Response({"message": "Password reset successfully."}, status=status.HTTP_200_OK)
                 return api_response(
-                message="Password reset successfully.",
-                message_type="success",
-                status_code=status.HTTP_200_OK
-                        )
-
-            else:
-                # return Response({"message": "Invalid email or OTP not verified."}, status=status.HTTP_400_BAD_REQUEST)
-                return api_response(
-                message="Invalid email or OTP not verified.",
-                message_type="error",
-                status_code=status.HTTP_400_BAD_REQUEST
-                        )
+                    message="Password reset successfully.",
+                    message_type="success",
+                    status_code=status.HTTP_200_OK
+                )
 
 
         else:
-            # return Response({"message": "Invalid request."}, status=status.HTTP_400_BAD_REQUEST)
             return api_response(
                 message="Invalid request.",
                 message_type="error",
@@ -577,7 +591,7 @@ class ChangePasswordAPIView(APIView):
 class ClassListDemoVideosApi(APIView):
 
     def get(self, request, *args, **kwargs):
-        class_list = Class.objects.all()
+        class_list = Class.objects.all().order_by('id')
         data = []
 
         for class_data in class_list:
