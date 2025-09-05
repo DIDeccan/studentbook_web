@@ -144,7 +144,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone_number','user_type','student_class','student_packages']
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone_number','profile_image',"address", "city", "state",'user_type','student_class','student_packages']
         read_only_fields = ['user_type','student_class', 'student_packages']
 
 class UserSerializer(serializers.ModelSerializer):
