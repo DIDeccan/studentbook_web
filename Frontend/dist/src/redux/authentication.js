@@ -81,7 +81,7 @@ export const createOrder = createAsyncThunk("auth/createOrder", async (_, { getS
     return res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data || "Order creation failed");
-    
+
   }
 });
 
@@ -92,93 +92,105 @@ export const loginUser = createAsyncThunk(
     try {
 
       const res = await api.post(API_ENDPOINTS.AUTH.LOGIN, { phone_number, password });
-      // const { access, refresh, user_type, student_id, is_paid } = res.data;
 
-      // const userData = { accessToken: access, refreshToken: refresh, user_type, student_id, is_paid };
-      // localStorage.setItem("userData", JSON.stringify(userData));
-const { access, refresh, user_type, student_id, is_paid, course_id, student_package_id } = res.data;
-const user = {
+      const { access, refresh, user_type, student_id, is_paid, course_id, student_package_id } = res.data;
+      const user = {
         user_type,
         is_paid: !!is_paid,
         student_id: student_id ?? null,
         course_id: course_id ?? null,
         student_package_id: student_package_id ?? null,
-      };  
-       const authData = saveAuthData({
+      };
+      const authData = saveAuthData({
         accessToken: access,
         refreshToken: refresh,
         user,
-      });    
-return authData;
+      });
+      return authData;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Login failed" });
     }
   }
 );
 
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async ({ phone, otp, newPassword, confirmPassword }, { rejectWithValue }) => {
+    try {
+      let res;
 
-export const forgotPassword = createAsyncThunk("auth/forgotPassword", async (payload, { rejectWithValue }) => {
-  try {
-    const body = payload.otp
-      ? {
-          user: payload.phone,
-          otp: payload.otp,
-          new_password: payload.newPassword,
-          confirm_new_password: payload.confirmPassword,
-        }
-      : { user: payload.phone };
+      if (!otp) {
+        res = await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { user: phone });
+      } else if (otp && !newPassword) {
+        res = await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { user: phone, otp });
+      } else {
+        res = await api.put(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+          user: phone,
+          new_password: newPassword,
+          confirm_new_password: confirmPassword,
+        });
+      }
 
-    const res = await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, body);
-    return res.data.message || "Operation successful";
-  } catch (err) {
-    return rejectWithValue(err.response?.data?.message || err.message);
-  }
-});
-
-export const logoutUser = createAsyncThunk("auth/logoutUser", async (_, { getState, rejectWithValue }) => {
-  try {
-    const { accessToken, refreshToken } = getState().auth;
-
-    if (accessToken && refreshToken) {
-      const response = await api.post(
-        API_ENDPOINTS.AUTH.LOGOUT,
-        { refresh: refreshToken },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      return res.data.message || "Operation successful";
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || err.response?.data?.detail || err.message || "Forgot password failed"
       );
     }
-
-    localStorage.removeItem("authData");
-    return true;
-  } catch (error) {
-    localStorage.removeItem("authData");
-    return rejectWithValue(error.response?.data?.message || "Logout failed");
   }
-});
+);
+
+
+export const logoutUser = createAsyncThunk(
+  "auth/logoutUser",
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const { accessToken, refreshToken } = getState().auth;
+
+      if (accessToken && refreshToken) {
+        const response = await api.post(
+          API_ENDPOINTS.AUTH.LOGOUT,
+          { refresh: refreshToken },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        localStorage.removeItem("authData");
+        return response.data;
+      }
+
+      localStorage.removeItem("authData");
+      return { message: "No active session" };
+    } catch (error) {
+      localStorage.removeItem("authData");
+      return rejectWithValue(error.response?.data?.message || "Logout failed");
+    }
+  }
+);
+
 
 // --- Slice ---
-// const initialAuthData = safeParseLocalStorage("authData");
- const initialState = {
-    loading: false,
-    error: null,
-    success: null,
-    registrationData: null,
-    otpVerified: false,
-    orderData: null,
-    // accessToken: initialAuthData?.accessToken || null,
-    // refreshToken: initialAuthData?.refreshToken || null,
-    // userData: initialAuthData?.user || null,
-    accessToken: safeParseLocalStorage("authData")?.accessToken || null,
+const initialState = {
+  loading: false,
+  error: null,
+  success: null,
+  registrationData: null,
+  otpVerified: false,
+  orderData: null,
+  // accessToken: initialAuthData?.accessToken || null,
+  // refreshToken: initialAuthData?.refreshToken || null,
+  // userData: initialAuthData?.user || null,
+  accessToken: safeParseLocalStorage("authData")?.accessToken || null,
   refreshToken: safeParseLocalStorage("authData")?.refreshToken || null,
   userData: safeParseLocalStorage("authData")?.user || null,
-  }
+}
 const authSlice = createSlice({
   name: "auth",
- initialState,
+  initialState,
   reducers: {
     logout: (state) => {
       // state.registrationData = null;
@@ -188,7 +200,7 @@ const authSlice = createSlice({
       // state.orderData = null;
       // state.userData = null;
       // Object.assign(state, initialState, { accessToken: null, refreshToken: null, userData: null });
-        Object.assign(state, initialState, {
+      Object.assign(state, initialState, {
         accessToken: null,
         refreshToken: null,
         userData: null,
@@ -198,15 +210,15 @@ const authSlice = createSlice({
       });
       localStorage.removeItem("authData");
     },
-     updateUserData: (state, action) => {
-    const updatedUser = action.payload;
-    state.userData = { ...state.userData, ...updatedUser };
-    const existingAuthData = JSON.parse(localStorage.getItem("authData")) || {};
-    localStorage.setItem(
-      "authData",
-      JSON.stringify({ ...existingAuthData, user: { ...(existingAuthData.user || {}), ...updatedUser } })
-    );
-  },
+    updateUserData: (state, action) => {
+      const updatedUser = action.payload;
+      state.userData = { ...state.userData, ...updatedUser };
+      const existingAuthData = JSON.parse(localStorage.getItem("authData")) || {};
+      localStorage.setItem(
+        "authData",
+        JSON.stringify({ ...existingAuthData, user: { ...(existingAuthData.user || {}), ...updatedUser } })
+      );
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -231,10 +243,11 @@ const authSlice = createSlice({
 
         const tokens = action.payload.data || {};
         if (tokens.access && tokens.refresh) {
-          // const user = state.registrationData || { role: "student" };
-      const baseUser = {
+          const baseUser = {
             user_type: state.registrationData?.user_type || "student",
             student_class: state.registrationData?.student_class || null,
+            first_name: state.registrationData?.first_name || null,
+            last_name: state.registrationData?.last_name || null,
             is_paid: false,
           };
           const authData = saveAuthData({ accessToken: tokens.access, refreshToken: tokens.refresh, user: baseUser });
@@ -278,7 +291,11 @@ const authSlice = createSlice({
       })
 
       // Forgot password
-      .addCase(forgotPassword.pending, (state) => { state.loading = true; state.error = null; state.success = null })
+      .addCase(forgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = null;
+      })
       .addCase(forgotPassword.fulfilled, (state, action) => {
         state.loading = false;
         state.success = action.payload;
@@ -288,17 +305,12 @@ const authSlice = createSlice({
         state.error = action.payload || "Forgot password failed";
       })
 
+
       // Logout
       .addCase(logoutUser.pending, (state) => { state.loading = true; state.error = null })
       .addCase(logoutUser.fulfilled, (state) => {
-        // state.loading = false;
-        // state.registrationData = null;
-        // state.accessToken = null;
-        // state.refreshToken = null;
-        // state.otpVerified = false;
-        // state.orderData = null;
-        // state.userData = null;
-           Object.assign(state, initialState, {
+
+        Object.assign(state, initialState, {
           accessToken: null,
           refreshToken: null,
           userData: null,
@@ -310,14 +322,8 @@ const authSlice = createSlice({
         toast.success("Logout successful");
       })
       .addCase(logoutUser.rejected, (state, action) => {
-        // state.loading = false;
-        // state.registrationData = null;
-        // state.accessToken = null;
-        // state.refreshToken = null;
-        // state.otpVerified = false;
-        // state.orderData = null;
-        // state.userData = null;
-           Object.assign(state, initialState, {
+
+        Object.assign(state, initialState, {
           accessToken: null,
           refreshToken: null,
           userData: null,

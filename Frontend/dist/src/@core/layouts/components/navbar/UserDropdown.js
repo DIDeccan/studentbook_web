@@ -1,51 +1,82 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import Avatar from "@components/avatar";
-import { isUserLoggedIn } from "@utils";
 import { useDispatch, useSelector } from "react-redux";
-import { Power, Settings } from "react-feather";
 import { UncontrolledDropdown, DropdownMenu, DropdownToggle, DropdownItem } from "reactstrap";
-import defaultAvatar from "@src/assets/images/portrait/small/avatar-s-11.jpg";
-import { logoutUser } from "@store/authentication"; 
-import { safeParseLocalStorage } from "../../../../utils/storage";
+import { Power, Settings } from "react-feather";
+import { logoutUser } from "@store/authentication";
 
 const UserDropdown = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  // const [userData, setUserData] = useState(null);
-// const userData = useSelector((state) => state.auth.userData);
-  const authData = safeParseLocalStorage("authData");
-  const user = authData?.user;
 
-  const userAvatar = user?.avatar || defaultAvatar;
+  const user = useSelector((state) => state.auth.userData) || {};
+  console.log(user);
 
-  
- const handleLogout = async () => {
-    console.log("Logging out user...");
-    console.log("Redux userData before logout:", authData);
+const username = user.first_name || user.last_name 
+  ? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim()
+  : "UserName";
 
+ const className = user.student_class
+  ? `Class ${user.student_class}`
+  : user.course_id
+  ? `Class ${user.course_id}`  
+  : "No class selected";
+
+
+  const userAvatar = user.profile_image
+    ? `${user.profile_image}?t=${new Date().getTime()}`
+    : null;
+
+  const avatarInitials = (user.first_name?.[0] || user.user_type?.[0] || "U") +
+                         (user.last_name?.[0] || "");
+
+  const handleLogout = async () => {
     try {
-      const resultAction = await dispatch(logoutUser());
-
-      console.log("logoutUser dispatch result:", resultAction);
-
+      const resultAction = await dispatch(logoutUser()).unwrap();
       if (logoutUser.fulfilled.match(resultAction)) {
-        console.log("Logout successful. Clearing state and redirecting...");
         navigate("/login");
-      } else {
-        console.error("Logout failed. Payload:", resultAction.payload);
       }
     } catch (err) {
-      console.error("Logout thunk threw error:", err);
+      console.error(err);
     }
-
-    // Double check localStorage cleanup
-    console.log("LocalStorage after logout:", localStorage);
   };
+
   return (
     <UncontrolledDropdown tag="li" className="dropdown-user nav-item">
-      <DropdownToggle href="/" tag="a" className="nav-link dropdown-user-link" onClick={(e) => e.preventDefault()}>
-        <Avatar img={userAvatar} imgHeight="40" imgWidth="40" status="online" />
+      <DropdownToggle
+        href="/"
+        tag="a"
+        className="nav-link dropdown-user-link"
+        onClick={(e) => e.preventDefault()}
+      >
+        <div className="user-nav d-sm-flex d-none">
+          <span className="user-name fw-bold">{username}</span>
+          <span className="user-status">{className}</span>
+        </div>
+
+        {userAvatar ? (
+          <img
+            src={userAvatar}
+            alt="User Avatar"
+            style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "50%" }}
+          />
+        ) : (
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: "#7367f0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "16px",
+            }}
+          >
+            {avatarInitials.toUpperCase()}
+          </div>
+        )}
       </DropdownToggle>
 
       <DropdownMenu end>

@@ -1,4 +1,4 @@
-import {useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSkin } from '@hooks/useSkin'
 import { useSelector, useDispatch } from 'react-redux'
@@ -38,6 +38,7 @@ import Register from './Register'
 import LoginBasic from './LoginBasic'
 import Footer from '../../../@core/layouts/components/footer'
 import PaymentModal from "./PaymentModal";
+import ForgotPassword from './ForgotPassword'
 
 const ToastContent = ({ t, name, role }) => {
   return (
@@ -72,126 +73,141 @@ const Login = () => {
     handleSubmit,
     formState: { errors }
   } = useForm({ defaultValues })
-const { data: classes } = useSelector((state) => state.classes);
+  const { data: classes } = useSelector((state) => state.classes);
   const source = skin === 'dark' ? illustrationsDark : illustrationsLight
 
-   const [modalOpen, setModalOpen] = useState(false)
-   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
   const toggleModal = () => setModalOpen(!modalOpen)
-   const toggleLoginModal = () => setLoginModalOpen(!loginModalOpen)
+  const toggleLoginModal = () => setLoginModalOpen(!loginModalOpen)
 
-  
-const [registerOpen, setRegisterOpen] = useState(false);
+
+  const [registerOpen, setRegisterOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
-
-    useEffect(() => {
+  const [forgotOpen, setForgotOpen] = useState(false);
+  useEffect(() => {
     dispatch(fetchClasses());
   }, [dispatch]);
   return (
     <div>
-    <div className="hero-wrapper" style={{ height: '75px' }}>
-      <div className="d-flex align-items-center justify-content-between px-3 py-2">
-        <Link className="d-flex align-items-center text-decoration-none" to="/">
-          <svg viewBox="0 0 139 95" version="1.1" height="28">
-            <defs>
-              <linearGradient x1="100%" y1="10.5120544%" x2="50%" y2="89.4879456%" id="linearGradient-1">
-                <stop stopColor="#000000" offset="0%" />
-                <stop stopColor="#FFFFFF" offset="100%" />
-              </linearGradient>
-              <linearGradient x1="64.0437835%" y1="46.3276743%" x2="37.373316%" y2="100%" id="linearGradient-2">
-                <stop stopColor="#EEEEEE" stopOpacity="0" offset="0%" />
-                <stop stopColor="#FFFFFF" offset="100%" />
-              </linearGradient>
-            </defs>
-            <g fill="none" fillRule="evenodd">
-              <g transform="translate(-400, -178)">
-                <g transform="translate(400, 178)">
-                  <path
-                    d="M0,0 L39.18,0 L69.34,32.25 L101.42,0 L138.78,0 V29.8C137.95,37.35 135.78,42.55 132.26,45.41C128.73,48.28 112.33,64.52 83.06,94.14 H56.27 L6.71,44.41 C2.46,39.98 0.34,35.10 0.34,29.80 C0.34,24.49 0.23,14.56 0,0 Z"
-                    fill="currentColor"
-                    className="text-primary"
-                  />
-                  <path
-                    d="M69.34,32.25 L101.42,0 H138.78 V29.8 C137.95,37.35 135.78,42.55 132.26,45.41 C128.73,48.28 112.33,64.52 83.06,94.14 H56.27 L32.84,70.5 L69.34,32.25 Z"
-                    fill="url(#linearGradient-1)"
-                    opacity="0.2"
-                  />
-                  <polygon
-                    fill="#000000"
-                    opacity="0.05"
-                    points="69.39 32.42 32.84 70.5 54.04 16.18"
-                  />
-                  <polygon
-                    fill="#000000"
-                    opacity="0.1"
-                    points="69.39 32.42 32.84 70.5 58.36 20.74"
-                  />
-                  <polygon
-                    fill="url(#linearGradient-2)"
-                    opacity="0.1"
-                    points="101.42 0 83.06 94.14 130.37 47.07"
-                  />
+      <div className="hero-wrapper" style={{ height: '75px' }}>
+        <div className="d-flex align-items-center justify-content-between px-3 py-2">
+          <Link className="d-flex align-items-center text-decoration-none" to="/">
+            <svg viewBox="0 0 139 95" version="1.1" height="28">
+              <defs>
+                <linearGradient x1="100%" y1="10.5120544%" x2="50%" y2="89.4879456%" id="linearGradient-1">
+                  <stop stopColor="#000000" offset="0%" />
+                  <stop stopColor="#FFFFFF" offset="100%" />
+                </linearGradient>
+                <linearGradient x1="64.0437835%" y1="46.3276743%" x2="37.373316%" y2="100%" id="linearGradient-2">
+                  <stop stopColor="#EEEEEE" stopOpacity="0" offset="0%" />
+                  <stop stopColor="#FFFFFF" offset="100%" />
+                </linearGradient>
+              </defs>
+              <g fill="none" fillRule="evenodd">
+                <g transform="translate(-400, -178)">
+                  <g transform="translate(400, 178)">
+                    <path
+                      d="M0,0 L39.18,0 L69.34,32.25 L101.42,0 L138.78,0 V29.8C137.95,37.35 135.78,42.55 132.26,45.41C128.73,48.28 112.33,64.52 83.06,94.14 H56.27 L6.71,44.41 C2.46,39.98 0.34,35.10 0.34,29.80 C0.34,24.49 0.23,14.56 0,0 Z"
+                      fill="currentColor"
+                      className="text-primary"
+                    />
+                    <path
+                      d="M69.34,32.25 L101.42,0 H138.78 V29.8 C137.95,37.35 135.78,42.55 132.26,45.41 C128.73,48.28 112.33,64.52 83.06,94.14 H56.27 L32.84,70.5 L69.34,32.25 Z"
+                      fill="url(#linearGradient-1)"
+                      opacity="0.2"
+                    />
+                    <polygon
+                      fill="#000000"
+                      opacity="0.05"
+                      points="69.39 32.42 32.84 70.5 54.04 16.18"
+                    />
+                    <polygon
+                      fill="#000000"
+                      opacity="0.1"
+                      points="69.39 32.42 32.84 70.5 58.36 20.74"
+                    />
+                    <polygon
+                      fill="url(#linearGradient-2)"
+                      opacity="0.1"
+                      points="101.42 0 83.06 94.14 130.37 47.07"
+                    />
+                  </g>
                 </g>
               </g>
-            </g>
-          </svg>
-          <h4 className="text-primary fw-bold mb-0 ms-2">StudentBook</h4>
-        </Link>
+            </svg>
+            <h4 className="text-primary fw-bold mb-0 ms-2">StudentBook</h4>
+          </Link>
 
-        <div>
-        
-  <Button
-  outline
-  color="primary"
-  className="me-2"
-  onClick={() => {
-    const storedAuth = localStorage.getItem("authData");
-    const token = storedAuth ? JSON.parse(storedAuth)?.accessToken : null;
+          <div>
 
-    if (classes && classes.length > 0) {
-      setSelectedClass(classes[0]); 
-    }
+            <Button
+              outline
+              color="primary"
+              className="me-2"
+              onClick={() => {
+                const storedAuth = localStorage.getItem("authData");
+                const token = storedAuth ? JSON.parse(storedAuth)?.accessToken : null;
 
-    if (token) {
-      setPaymentOpen(true);
-    } else {
-      setRegisterOpen(true);
-    }
-  }}
->
-    Sign Up
-  </Button>
-            <Button color="primary" className="me-2" onClick={toggleLoginModal}>Log In</Button>
+                if (classes && classes.length > 0) {
+                  setSelectedClass(classes[0]);
+                }
+
+                if (token) {
+                  setPaymentOpen(true);
+                } else {
+                  setRegisterOpen(true);
+                }
+              }}
+            >
+              Sign Up
+            </Button>
+            <Button color="primary" className="me-2" onClick={() => setLoginModalOpen(true)}>Log In</Button>
+          </div>
         </div>
+        <Register
+          isOpen={registerOpen}
+          toggle={() => setRegisterOpen(!registerOpen)}
+          openPayment={() => {
+            setRegisterOpen(false);
+            setPaymentOpen(true);
+          }}
+          openLogin={() => {
+            setRegisterOpen(false);
+            setLoginModalOpen(true);
+          }}
+          selectedClass={selectedClass}
+        />
+
+        <PaymentModal
+          isOpen={paymentOpen}
+          toggle={() => setPaymentOpen(!paymentOpen)}
+          classInfo={selectedClass}
+        />
+
+
+        <LoginBasic
+          isOpen={loginModalOpen}
+          toggle={() => setLoginModalOpen(!loginModalOpen)}
+          openRegister={() => {
+            setLoginModalOpen(false)
+            setRegisterOpen(true)
+          }}
+          openForgotPassword={() => {
+            setLoginModalOpen(false)
+            setForgotOpen(true)
+          }}
+        />
+
+        <ForgotPassword
+          isOpen={forgotOpen}
+          toggle={() => setForgotOpen(!forgotOpen)}
+        />
+
+
       </div>
-       <Register
-  isOpen={registerOpen}
-  toggle={() => setRegisterOpen(!registerOpen)}
-  openPayment={() => {
-    setRegisterOpen(false);
-    setPaymentOpen(true);
-  }}
-   selectedClass={selectedClass} 
-/>
-
-<PaymentModal
-  isOpen={paymentOpen}
-  toggle={() => setPaymentOpen(!paymentOpen)}
-  classInfo={selectedClass} 
-/>
-
-      <LoginBasic
-        isOpen={loginModalOpen}
-        toggle={toggleLoginModal}
-        openRegister={() => {
-          setLoginModalOpen(false)
-          setModalOpen(true)
-        }}
-      />
-
-    </div>
-       <Container fluid className="d-flex flex-column flex-lg-row align-items-center justify-content-between px-5 pb-5 pt-2 hero-content">
+      <Container fluid className="d-flex flex-column flex-lg-row align-items-center justify-content-between px-5 pb-5 pt-2 hero-content">
         <div className="text-start pt-5" style={{ maxWidth: '600px' }}>
           <h1 className="display-4 fw-bold">Your Course</h1>
           <h1 className="display-4 fw-bold text-primary">To Success</h1>
@@ -216,12 +232,12 @@ const [registerOpen, setRegisterOpen] = useState(false);
           <img className='img-fluid' src={source} alt='Login Cover' />
         </div>
       </Container>
-    <div>
-<SwiperBook/>
-<Classcard/>
-<WhyChooseUs/>
-<Footer/>
-    </div>
+      <div>
+        <SwiperBook />
+        <Classcard />
+        <WhyChooseUs />
+        <Footer />
+      </div>
 
 
     </div>

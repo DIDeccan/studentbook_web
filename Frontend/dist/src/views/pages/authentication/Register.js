@@ -21,6 +21,7 @@ import {
 } from "reactstrap";
 import { Facebook, Twitter, Mail, GitHub } from "react-feather";
 import "@styles/react/pages/page-authentication.scss";
+import InputPasswordToggle from '@components/input-password-toggle'
 import { signupUser, verifyOtp, resendOtp } from "../../../redux/authentication";
 import api from "@src/apis/api";
 import API_ENDPOINTS from "@src/apis/endpoints";
@@ -179,7 +180,6 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
       <ModalHeader toggle={toggle} className="border-0 pb-0" />
       <ModalBody style={{ padding: 0 }}>
         <Row className="g-0 h-100">
-          {/* Left Section */}
           <Col
             md="6"
             className="d-none d-md-flex align-items-center justify-content-center p-4"
@@ -191,7 +191,6 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
             </div>
           </Col>
 
-          {/* Right Section */}
           <Col
             md="6"
             className="p-4"
@@ -206,14 +205,8 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
             <p className="text-muted mb-3">Let’s get you set up</p>
 
             <Form onSubmit={otpMode ? handleOtpSubmit : handleSubmit(onSubmit)}>
-              {/* Signup Form */}
               {!otpMode ? (
                 <>
-                  {/* {isSubmitSuccessful && (
-                <Alert color="success">
-                  Signup successful. Please log in.
-                </Alert>
-              )} */}
 
                   {/* First Name */}
                   <FormGroup>
@@ -328,7 +321,7 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
                         },
                       }}
                       render={({ field }) => (
-                        <Input
+                        <InputPasswordToggle
                           type="password"
                           {...field}
                           invalid={!!errors.password}
@@ -351,7 +344,7 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
                           val === password || "Passwords do not match",
                       }}
                       render={({ field }) => (
-                        <Input
+                        <InputPasswordToggle
                           type="password"
                           {...field}
                           invalid={!!errors.confirmPassword}

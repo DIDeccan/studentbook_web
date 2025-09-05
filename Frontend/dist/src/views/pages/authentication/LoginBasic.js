@@ -9,7 +9,7 @@ import { loginUser, updateUserData } from "@store/authentication";
 import { getHomeRouteForLoggedInUser } from '@utils';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Label, Input, Form, FormFeedback } from "reactstrap";
 
-const LoginBasic = ({ isOpen, toggle, openRegister }) => {
+const LoginBasic = ({ isOpen, toggle, openRegister, openForgotPassword }) => {
   const ability = useContext(AbilityContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -46,13 +46,13 @@ const LoginBasic = ({ isOpen, toggle, openRegister }) => {
       } else {
         const message = resultAction.payload?.message || "Login failed";
 
-  if (message?.toLowerCase().includes("password")) {
-    setError("password", { type: "manual", message });
-  } else {
-    setError("username", { type: "manual", message });
-  }
-   toast.error(message);
-}
+        if (message?.toLowerCase().includes("password")) {
+          setError("password", { type: "manual", message });
+        } else {
+          setError("username", { type: "manual", message });
+        }
+        toast.error(message);
+      }
     } catch (err) {
       toast.dismiss();
       toast.error("Something went wrong");
@@ -84,7 +84,7 @@ const LoginBasic = ({ isOpen, toggle, openRegister }) => {
               control={control}
               rules={{ required: "Password is required" }}
               render={({ field }) => (
-                <InputPasswordToggle id="password" className="input-group-merge" placeholder="Enter password" invalid={!!errors.password} {...field} />
+                <InputPasswordToggle id="password" placeholder="Enter password" invalid={!!errors.password} {...field} />
               )}
             />
             {errors.password && <FormFeedback>{errors.password.message}</FormFeedback>}
@@ -95,7 +95,18 @@ const LoginBasic = ({ isOpen, toggle, openRegister }) => {
               <Input type="checkbox" id="rememberMe" className="form-check-input" />
               <Label className="form-check-label" for="rememberMe">Remember me</Label>
             </div>
-            <a href="#" className="text-primary small" onClick={(e) => { e.preventDefault(); toggle(); /* open forgot password modal */ }}>Forgot password?</a>
+            <a
+              href="#"
+              className="text-primary small"
+              onClick={(e) => {
+                e.preventDefault();
+                console.log("Forgot Password clicked");
+                openForgotPassword();
+              }}
+            >
+              Forgot password?
+            </a>
+
           </div>
 
           <Button color="primary" block type="submit" disabled={loading}>
