@@ -4,16 +4,31 @@ import API_ENDPOINTS from "@src/apis/endpoints";
 import toast from "react-hot-toast";
 import { safeParseLocalStorage } from "../utils/storage";
 
+// const resolveIds = (studentId, classId, state) => {
+//   const profile = state.studentProfile?.data;
+//   const authUser = state.auth?.user;
+//   const resolved = {
+//     // studentId: studentId || profile?.student_id,
+//     // classId: classId || profile?.course_id,
+//     studentId: studentId || profile?.id || authUser?.id,
+//     classId: classId || profile?.student_class || authUser?.student_class,
+//   };
+//   console.log("resolveIds:", { studentId, classId, resolved });
+//   return resolved;
+// };
+// --- Helper: resolve IDs ---
 const resolveIds = (studentId, classId, state) => {
   const profile = state.studentProfile?.data;
+  const authUser = state.auth?.user; // ✅ fallback
+
   const resolved = {
-    studentId: studentId || profile?.student_id,
-    classId: classId || profile?.course_id,
+    studentId: studentId || profile?.id || authUser?.id,
+    classId: classId || profile?.student_class || authUser?.student_class,
   };
+
   console.log("resolveIds:", { studentId, classId, resolved });
   return resolved;
 };
-
 // ------------------- Thunks -------------------
 
 // Fetch Student Profile
@@ -94,6 +109,7 @@ export const uploadStudentProfileImage = createAsyncThunk(
     }
   }
 );
+
 export const removeStudentProfileImage = createAsyncThunk(
   "studentProfile/removeImage",
   async ({ studentId, classId }, { getState, rejectWithValue }) => {
@@ -102,11 +118,12 @@ export const removeStudentProfileImage = createAsyncThunk(
         getState().auth?.accessToken || localStorage.getItem("accessToken");
       if (!token) return rejectWithValue("No auth token found");
 
-      if (!studentId || !classId)
+      const { studentId: sid, classId: cid } = resolveIds(studentId, classId, getState());
+      if (!sid || !cid)
         return rejectWithValue("Missing studentId or classId");
 
       const res = await api.put(
-        API_ENDPOINTS.STUDENTS.PROFILE(studentId, classId),
+        API_ENDPOINTS.STUDENTS.PROFILE(sid, cid),
         { profile_image: null },
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
       );
@@ -119,6 +136,7 @@ export const removeStudentProfileImage = createAsyncThunk(
     }
   }
 );
+
 
 export const sendPhoneOtp = createAsyncThunk(
   "studentProfile/sendPhoneOtp",

@@ -22,7 +22,7 @@ import {
 import { Facebook, Twitter, Mail, GitHub } from "react-feather";
 import "@styles/react/pages/page-authentication.scss";
 import InputPasswordToggle from '@components/input-password-toggle'
-import { signupUser, verifyOtp, resendOtp } from "../../../redux/authentication";
+import { fetchClasses, signupUser, verifyOtp, resendOtp } from "../../../redux/authentication";
 import api from "@src/apis/api";
 import API_ENDPOINTS from "@src/apis/endpoints";
 import { toast } from "react-toastify";
@@ -67,26 +67,38 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
   }, [confirmPassword, password, setError, clearErrors]);
 
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const res = await api.get(API_ENDPOINTS.CLASSES);
-        setClasses(res.data.data || []);
-      } catch (err) {
-        console.error("Error fetching classes:", err);
-        setClassError("Failed to load classes");
-      } finally {
-        setClassLoading(false);
-      }
-    };
-    fetchClasses();
-  }, []);
+  // useEffect(() => {
+  //   const fetchClasses = async () => {
+  //     try {
+  //       const res = await api.get(API_ENDPOINTS.CLASSES);
+  //       setClasses(res.data.data || []);
+  //     } catch (err) {
+  //       console.error("Error fetching classes:", err);
+  //       setClassError("Failed to load classes");
+  //     } finally {
+  //       setClassLoading(false);
+  //     }
+  //   };
+  //   fetchClasses();
+  // }, []);
 
+  // useEffect(() => {
+  //   if (selectedClass) {
+  //     reset({
+  //       classLevel: selectedClass.id,
+  //     });
+  //   }
+  // }, [selectedClass, reset]);
+
+   // Fetch classes from Redux
+  useEffect(() => {
+    dispatch(fetchClasses());
+  }, [dispatch]);
+
+  // Preselect class if passed
   useEffect(() => {
     if (selectedClass) {
-      reset({
-        classLevel: selectedClass.id,
-      });
+      reset({ classLevel: selectedClass.id });
     }
   }, [selectedClass, reset]);
 
