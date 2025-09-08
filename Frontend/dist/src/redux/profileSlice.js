@@ -4,31 +4,19 @@ import API_ENDPOINTS from "@src/apis/endpoints";
 import toast from "react-hot-toast";
 import { safeParseLocalStorage } from "../utils/storage";
 
-// const resolveIds = (studentId, classId, state) => {
-//   const profile = state.studentProfile?.data;
-//   const authUser = state.auth?.user;
-//   const resolved = {
-//     // studentId: studentId || profile?.student_id,
-//     // classId: classId || profile?.course_id,
-//     studentId: studentId || profile?.id || authUser?.id,
-//     classId: classId || profile?.student_class || authUser?.student_class,
-//   };
-//   console.log("resolveIds:", { studentId, classId, resolved });
-//   return resolved;
-// };
-// --- Helper: resolve IDs ---
 const resolveIds = (studentId, classId, state) => {
   const profile = state.studentProfile?.data;
-  const authUser = state.auth?.user; // ✅ fallback
-
+  
   const resolved = {
-    studentId: studentId || profile?.id || authUser?.id,
-    classId: classId || profile?.student_class || authUser?.student_class,
-  };
+    studentId: studentId || profile?.student_id,
+    classId: classId || profile?.course_id,
 
+  };
   console.log("resolveIds:", { studentId, classId, resolved });
   return resolved;
 };
+
+
 // ------------------- Thunks -------------------
 
 // Fetch Student Profile

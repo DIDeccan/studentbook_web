@@ -13,12 +13,6 @@ const saveAuthData = ({ accessToken, refreshToken, user }) => {
 
 // --- Thunks ---
 
-export const fetchClasses = createAsyncThunk("auth/fetchClasses", async () => {
-  const res = await api.get(API_ENDPOINTS.CLASSES);
-  return res.data.data; // backend sends {id, name, amount}
-});
-
-
 export const signupUser = createAsyncThunk(
   "auth/signupUser",
   async (userData, { rejectWithValue }) => {
@@ -195,9 +189,6 @@ const initialState = {
   accessToken: safeParseLocalStorage("authData")?.accessToken || null,
   refreshToken: safeParseLocalStorage("authData")?.refreshToken || null,
   userData: safeParseLocalStorage("authData")?.user || null,
-  classes: [], // merged classes state
-  classesLoading: false,
-  classesError: null,
 }
 const authSlice = createSlice({
   name: "auth",
@@ -233,18 +224,6 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchClasses.pending, (state) => {
-        state.classesLoading = true;
-        state.classesError = null;
-      })
-      .addCase(fetchClasses.fulfilled, (state, action) => {
-        state.classesLoading = false;
-        state.classes = action.payload;
-      })
-      .addCase(fetchClasses.rejected, (state, action) => {
-        state.classesLoading = false;
-        state.classesError = action.error.message || "Failed to fetch classes";
-      })
       // Signup
       .addCase(signupUser.pending, (state) => { state.loading = true; state.error = null; state.success = null })
       .addCase(signupUser.fulfilled, (state, action) => {
