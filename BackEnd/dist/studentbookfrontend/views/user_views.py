@@ -359,7 +359,7 @@ class ForgotPasswordAPIView(APIView):
 
             else:
                 return api_response(
-                message="Invalid email or OTP not verified.",
+                message="Invalid User or OTP not verified.",
                 message_type="error",
                 status_code=status.HTTP_400_BAD_REQUEST
                         )
@@ -405,15 +405,16 @@ class StudentRegisterAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         json_data = request.data
-
-        try:
-            validate_email(json_data.get('email'))
-        except ValidationError as e:
-            return api_response(
-                message="Invalid email format.",
-                message_type="error",
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
+        user = None
+        if json_data.get('email'):
+            try:
+                validate_email(json_data.get('email'))
+            except ValidationError as e:
+                return api_response(
+                    message="Invalid email format.",
+                    message_type="error",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
         
         try:
             phone_number = validate_phone_number(json_data.get('phone_number'))
@@ -429,10 +430,11 @@ class StudentRegisterAPIView(APIView):
             user = User.objects.get(phone_number=json_data.get('phone_number'))
 
         except User.DoesNotExist:
-            try:
-                user = User.objects.get(email=json_data.get('email'))
-            except User.DoesNotExist:
-                user = None
+            if json_data.get('email'):
+                try:
+                    user = User.objects.get(email=json_data.get('email'))
+                except User.DoesNotExist:
+                    user = None
 
         if user:
             if not user.is_active and not user.otp_verified:
@@ -453,7 +455,7 @@ class StudentRegisterAPIView(APIView):
                 )
         else:
 
-            class_name = json_data['student_class']
+            class_name = json_data['class_id']
             try:
                 class_obj = Class.objects.get(id=class_name)
             except Class.DoesNotExist:
@@ -616,6 +618,7 @@ class ResendOtpAPIView(APIView):
     def post(self, request, *args, **kwargs):
         json_data = request.data
         phone_number = json_data.get('phone_number',None)
+        new_phone_number = json_data.get('new_phone_number',None)
         if phone_number is None:
             return api_response(
                             message="Provide Phone Number",
@@ -629,13 +632,16 @@ class ResendOtpAPIView(APIView):
 
         if not user:
             return api_response(
-                            message="User Not Fonund",
+                            message="User Not Found",
                             message_type="error",
                             status_code=status.HTTP_400_BAD_REQUEST
                         )
         
         # send_otp_email(user,'Registration OTP')
-        responce = send_otp_phone_number(user,'Registration OTP')
+        if phone_number and not new_phone_number:
+            responce = send_otp_phone_number(user,'Registration OTP')
+        elif phone_number and new_phone_number:
+            responce = send_otp_newphone_number(user,'OTP For Phone number change',new_phone_number)
 
         return responce
     

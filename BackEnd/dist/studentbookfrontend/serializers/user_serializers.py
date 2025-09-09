@@ -116,7 +116,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['message_type'] = "success"
         if user.user_type == 'student':
             data['student_id'] = user.student.id if hasattr(user, 'student') else None
-            data['course_id'] = user.student.student_class.id if hasattr(user, 'student') and user.student.student_class else None
+            data['class_id'] = user.student.student_class.id if hasattr(user, 'student') and user.student.student_class else None
             data['is_paid'] = StudentPackage.objects.filter(student=user).exists()
 
         return data

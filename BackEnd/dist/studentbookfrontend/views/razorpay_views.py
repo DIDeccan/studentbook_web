@@ -19,7 +19,7 @@ class RazorpayOrderAPIView(APIView):
 
     def post(self, request):
         user = request.user
-        student_class_id = request.data.get("student_class")
+        student_class_id = request.data.get("class_id")
         amount = request.data.get("price")
         if not student_class_id:
                 return api_response(
@@ -129,7 +129,7 @@ class TransactionAPIView(APIView):
             data = {
                 "student_package_id": student_package.id,
                 "student_id": student.id,
-                "course_id": student_package.course.id,
+                "class_id": student_package.course.id,
             }
             return api_response(
                         message="Transaction verified and course added to student packages",
