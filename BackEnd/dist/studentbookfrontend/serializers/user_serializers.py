@@ -133,19 +133,22 @@ class SchoolSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class StudentPackageSerializer(serializers.ModelSerializer):
-    course = ClassSerializer(read_only=True)  # nested course info
+    # course = ClassSerializer(read_only=True)  # nested course info
+    class_id = serializers.IntegerField(source='course.id', read_only=True)
+    student_package_id = serializers.IntegerField(source='id', read_only=True)
 
     class Meta:
         model = StudentPackage
-        fields = ['id', 'course', 'price', 'subscription_taken_from', 'subscription_valid_till']
+        fields = ['student_package_id', 'class_id', 'price', 'subscription_taken_from', 'subscription_valid_till']
 
 class StudentSerializer(serializers.ModelSerializer):
     student_packages = StudentPackageSerializer(many=True, read_only=True)
-
+    class_id = serializers.IntegerField(source='student_class.id', read_only=True)
+    student_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = Student
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone_number','profile_image',"address", "city", "state",'user_type','student_class','student_packages']
-        read_only_fields = ['user_type','student_class', 'student_packages']
+        fields = ['student_id', 'email', 'first_name', 'last_name', 'phone_number','profile_image',"address", "city", "state",'user_type','class_id','student_packages']
+        read_only_fields = ['user_type','class_id', 'student_packages']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

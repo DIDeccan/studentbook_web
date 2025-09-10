@@ -269,11 +269,14 @@ class LogoutView(APIView):
                     token = RefreshToken(refresh_token.token)
                     token.blacklist()
 
+            user = request.user
+            user.logout_time =  timezone.now() # Update logout time
+            user.save(update_fields=["logout_time"])
 
             return api_response(
                 message="Logged out successfully.",
                 message_type="success",
-                status_code=status.HTTP_205_RESET_CONTENT
+                status_code=status.HTTP_200_OK
                         )
 
         except TokenError:
