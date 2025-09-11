@@ -1,25 +1,52 @@
 import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
 import { Card, Button, Spinner } from "reactstrap";
 import { Mail, Phone, Calendar } from "react-feather";
-import { uploadStudentProfileImage } from "../../../redux/profileSlice";
-
+import { uploadStudentProfileImage, removeStudentProfileImage } from "../../../redux/profileSlice";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const ProfileHeader = () => {
   const dispatch = useDispatch();
 
   const profileData = useSelector((state) => state.profile?.data);
   const loading = useSelector((state) => state.profile?.loading);
-  const userData = useSelector((state) => state.auth?.userData);
+  const uploading = useSelector((state) => state.profile?.uploading);
+  const authData = useSelector((state) => state.auth?.userData || state.auth?.authData?.user);
 
-  const studentId = userData?.student_id;
+  const studentId = authData?.student_id;
   const classId =
-    userData?.course_id ||
-    userData?.student_class ||
-    profileData?.student_packages?.[0]?.course_id;
+    authData?.course_id ||
+    authData?.student_class ||
+    (profileData?.student_packages && profileData.student_packages.length > 0
+      ? profileData.student_packages[0].course_id
+      : null);
 
-  const handleUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file || !studentId || !classId) return;
+
+  const [previewFile, setPreviewFile] = useState(null);
+  const [file, setFile] = useState(null);
+
+
+  const handleFileSelect = (event) => {
+    const selected = event.target.files[0];
+    if (!selected) return;
+
+    setFile(selected);
+    setPreviewFile(URL.createObjectURL(selected));
+  };
+
+  const handleUpload = () => {
+    if (!file) {
+      console.warn("No file selected");
+      return;
+    }
+    if (!studentId || !classId) {
+      console.warn("Cannot upload - studentId or classId missing", { studentId, classId });
+      return;
+    }
+    console.log("Dispatching uploadStudentProfileImage with:", { studentId, classId, file });
     dispatch(uploadStudentProfileImage({ studentId, classId, file }));
+
+    setPreviewFile(null);
+    setFile(null);
   };
 
   if (loading || !profileData) {
@@ -33,6 +60,7 @@ const ProfileHeader = () => {
 
   const profile = profileData;
   const subscription = profile.student_packages?.[0];
+  const profileImageUrl = previewFile || (profile.profile_image ? `${BASE_URL}${profile.profile_image}` : null);
 
   return (
     <Card className="border-0 shadow-sm">
@@ -65,17 +93,31 @@ const ProfileHeader = () => {
               color: "#6c757d",
             }}
           >
-            {profile.profile_image ? (
-              <img
-                src={profile.profile_image}
+            {profileImageUrl ? (
+              <img src={profileImageUrl}
                 alt="User Avatar"
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
+
             ) : (
               <span>
                 {profile.first_name?.charAt(0) || ""}
                 {profile.last_name?.charAt(0) || ""}
               </span>
+            )}
+            {uploading && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "rgba(255,255,255,0.6)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Spinner size="sm" color="primary" />
+              </div>
             )}
           </div>
 
@@ -110,10 +152,25 @@ const ProfileHeader = () => {
               id="uploadInput"
               style={{ display: "none" }}
               accept="image/*"
-              onChange={handleUpload}
+              onChange={handleFileSelect}
             />
-            <Button color="secondary" size="sm">
-              Reset
+            {previewFile && (
+              <Button color="success" size="sm" onClick={handleUpload}>
+                Confirm
+              </Button>
+            )}
+            <Button
+              color="secondary"
+              size="sm"
+              onClick={() => {
+                setPreviewFile(null);
+                setFile(null);
+                if (studentId && classId) {
+                  dispatch(removeStudentProfileImage({ studentId, classId }));
+                }
+              }}
+            >
+              Remove
             </Button>
           </div>
           <small className="text-muted d-block mt-1">
@@ -126,6 +183,3 @@ const ProfileHeader = () => {
 };
 
 export default ProfileHeader;
-
-
-

@@ -1,6 +1,6 @@
 import { useEffect, useContext } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Modal, ModalHeader, ModalBody, Button } from "reactstrap";
+import { Modal, ModalHeader, ModalBody, Button, Spinner } from "reactstrap";
 import { createOrder, updateUserData } from "../../../redux/authentication";
 import api from "@src/apis/api";
 import API_ENDPOINTS from "@src/apis/endpoints";
@@ -9,18 +9,27 @@ import { useNavigate } from "react-router-dom";
 import { getHomeRouteForLoggedInUser } from "@utils";
 import { toast } from "react-toastify";
 
-const PaymentModal = ({ isOpen, toggle, classInfo }) => {
+const PaymentModal = ({ isOpen, toggle, classInfo, onSuccess }) => {
   const ability = useContext(AbilityContext)
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { orderData, accessToken, registrationData, userData } = useSelector((state) => state.auth);
+  const { orderData, accessToken, registrationData, userData, loading, error } = useSelector((state) => state.auth);
+
 
   useEffect(() => {
-    if (isOpen && !orderData) {
+    if (isOpen) {
+      const token =
+        accessToken ||
+        JSON.parse(localStorage.getItem("authData"))?.accessToken;
+
+      if (!token) {
+        console.warn("No token found, not creating order yet");
+        return;
+      }
+
       dispatch(createOrder());
     }
-  }, [isOpen, orderData, dispatch]);
-
+  }, [isOpen, accessToken, dispatch]);
   const openRazorpay = (orderData) => {
     if (!orderData) return;
 
@@ -63,34 +72,27 @@ const PaymentModal = ({ isOpen, toggle, classInfo }) => {
 
           const verifyData = verifyRes.data?.data;
           if (!verifyData) throw new Error("Payment verification returned no data");
-          // const existingUser = JSON.parse(localStorage.getItem("userData")) || userData || {};
 
-          // const updatedUser = {
-          //   ...existingUser,
-          //   student_id: verifyData.student_id,
-          //   student_package_id: verifyData.student_package_id,
-          //   student_class: verifyData.course_id,
-          // };
-          // localStorage.setItem("userData", JSON.stringify(updatedUser));
-          // dispatch(updateUserData(updatedUser));
-   dispatch(
+          dispatch(
             updateUserData({
               is_paid: true,
               student_id: verifyData.student_id,
               student_package_id: verifyData.student_package_id,
-              // Keep both for compatibility with createOrder and anywhere else:
               student_class: verifyData.course_id,
               course_id: verifyData.course_id,
             })
           );
+
+          if (typeof onSuccess === "function") {
+            onSuccess();
+          }
+
           toast.success("Payment successful!");
           ability.update([{ action: "manage", subject: "all" }]);
           toggle();
-          // Navigate user based on role
-          // const role = verifyRes.data?.data?.user?.role || "student";
-          // navigate(getHomeRouteForLoggedInUser(role));
-         const role = verifyData?.user_type || userData?.user_type || registrationData?.user_type || "student";
-         navigate(getHomeRouteForLoggedInUser(role));
+
+          const role = verifyData?.user_type || userData?.user_type || registrationData?.user_type || "student";
+          navigate(getHomeRouteForLoggedInUser(role));
         } catch (err) {
           toast.error("Payment verification failed. Please try again.");
           dispatch(createOrder());
@@ -99,9 +101,9 @@ const PaymentModal = ({ isOpen, toggle, classInfo }) => {
     };
 
     const rzp = new window.Razorpay(options);
- rzp.on("payment.failed", () => {
+    rzp.on("payment.failed", () => {
       toast.error("Payment failed. Please try again.");
-      dispatch(createOrder()); 
+      dispatch(createOrder());
     });
     rzp.open();
   };
@@ -118,13 +120,27 @@ const PaymentModal = ({ isOpen, toggle, classInfo }) => {
             <p className="text-success fw-bold">₹{classInfo.cost}</p>
           </div>
         )}
-        {orderData ? (
+
+        {loading && <Spinner color="primary" />}
+        {error && (
+          <div>
+            <p className="text-danger">
+              {typeof error === "string"
+                ? error
+                : error?.message || "Something went wrong. Please try again."}
+            </p>
+            <Button color="warning" onClick={() => dispatch(createOrder())}>
+              Retry
+            </Button>
+          </div>
+        )}
+        {!loading && !error && orderData && (
           <Button color="success" onClick={() => openRazorpay(orderData)}>
             Pay Now
           </Button>
-        ) : (
-          <p>Loading order...</p>
         )}
+
+        {!loading && !error && !orderData && <p>Preparing your order...</p>}
       </ModalBody>
     </Modal>
   );

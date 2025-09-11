@@ -1,134 +1,170 @@
-import { useState } from 'react'
-import toast from 'react-hot-toast'
-import api from '@src/apis/api'
-import API_ENDPOINTS from '@src/apis/endpoints'
-
-import {
-  Modal,
-  ModalHeader,
-  ModalBody,
-  Form,
-  FormGroup,
-  Label,
-  Input,
-  Button
-} from 'reactstrap'
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import { Modal, ModalHeader, ModalBody, Form, FormGroup, Label, Input, Button } from "reactstrap";
+import { forgotPassword, resendOtp } from "../../../redux/authentication";
+import InputPasswordToggle from '@components/input-password-toggle'
+import { bottom } from "@popperjs/core";
 
 const ForgotPassword = ({ isOpen, toggle }) => {
-  const [step, setStep] = useState(1)
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
+
+  const [step, setStep] = useState(1);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    if (step === 2 && password !== confirmPassword) {
-      toast.error("Passwords don't match")
-      return
-    }
+    e.preventDefault();
 
     try {
       if (step === 1) {
-        await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
-          user: phone
-        })
-        toast.success('OTP sent to your phone!')
-        setStep(2)
-      } else {
-        await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
-          user: phone,
-          otp,
-          new_password: password,
-          confirm_new_password: confirmPassword
-        })
-        toast.success('Password reset successfully!')
-        toggle()
-        setStep(1)
-        setPhone('')
-        setOtp('')
-        setPassword('')
-        setConfirmPassword('')
+        const result = await dispatch(forgotPassword({ phone })).unwrap();
+        toast.success(result);
+        setStep(2);
+      }
+
+      else if (step === 2 && !otpVerified) {
+        const result = await dispatch(forgotPassword({ phone, otp })).unwrap();
+        toast.success(result);
+        setOtpVerified(true);
+      }
+
+      else if (step === 2 && otpVerified) {
+        if (newPassword !== confirmPassword) {
+          toast.error("Passwords do not match");
+          return;
+        }
+        const result = await dispatch(
+          forgotPassword({ phone, otp, newPassword, confirmPassword })
+        ).unwrap();
+        toast.success(result);
+
+        toggle();
+        setStep(1);
+        setPhone("");
+        setOtp("");
+        setOtpVerified(false);
+        setNewPassword("");
+        setConfirmPassword("");
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Something went wrong')
+      toast.error(err?.message || err);
     }
-  }
+  };
+
+  const handleResendOtp = async () => {
+    if (!phone) {
+      toast.error("Enter your phone number first");
+      return;
+    }
+    setResendLoading(true);
+    try {
+      const res = await dispatch(resendOtp(phone)).unwrap();
+      toast.success(res?.message || "OTP resent successfully!");
+    } catch (err) {
+      toast.error(err?.message || "Failed to resend OTP");
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} toggle={toggle} centered>
       <ModalHeader toggle={toggle}>Forgot Password</ModalHeader>
       <ModalBody>
         <Form onSubmit={handleSubmit}>
-          {step === 1 ? (
-            <>
-              <p className="mb-2">
-                Enter your phone number and we&apos;ll send you an OTP to reset your password
-              </p>
-              <FormGroup>
-                <Label for="forgot-phone">Phone Number</Label>
-                <Input
-                  type="text"
-                  id="forgot-phone"
-                  placeholder="Enter your phone number"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-              </FormGroup>
-              <Button color="primary" block type="submit">
-                Send OTP
+          {step === 1 && (
+            <FormGroup>
+              <Label>Phone Number</Label>
+              <Input
+                type="text"
+                placeholder="Enter your phone number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                style={{ marginBottom: "10px" }}
+                required
+              />
+              <Button color="primary" block type="submit" disabled={loading}>
+                {loading ? "Sending OTP..." : "Send OTP"}
               </Button>
-            </>
-          ) : (
+            </FormGroup>
+          )}
+
+          {step === 2 && (
             <>
               <FormGroup>
                 <Label>Phone Number</Label>
                 <Input type="text" value={phone} disabled />
               </FormGroup>
-              <FormGroup>
-                <Label for="otp">OTP</Label>
-                <Input
-                  type="text"
-                  id="otp"
-                  placeholder="Enter OTP"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  required
-                />
-              </FormGroup>
-              <FormGroup>
-                <Label for="new-password">New Password</Label>
-                <Input
-                  type="password"
-                  id="new-password"
-                  placeholder="Enter new password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </FormGroup>
-              <FormGroup>
-                <Label for="confirm-password">Confirm Password</Label>
-                <Input
-                  type="password"
-                  id="confirm-password"
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </FormGroup>
-              <Button color="success" block type="submit">
-                Reset Password
+
+              {!otpVerified && (
+                <FormGroup>
+                  <Label>OTP</Label>
+                  <Input
+                    type="text"
+                    placeholder="Enter OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    required
+                  />
+                </FormGroup>
+              )}
+
+              {otpVerified && (
+                <>
+                  <FormGroup>
+                    <Label>New Password</Label>
+                    <InputPasswordToggle
+                      type="password"
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                    />
+                  </FormGroup>
+                  <FormGroup>
+                    <Label>Confirm Password</Label>
+                    <InputPasswordToggle
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </FormGroup>
+                </>
+              )}
+
+              <Button
+                color="link"
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resendLoading}
+              >
+                {resendLoading ? "Resending..." : "Resend OTP"}
+              </Button>
+
+              <Button color="success" block type="submit" disabled={loading}>
+                {loading
+                  ? otpVerified
+                    ? "Resetting..."
+                    : "Verifying OTP..."
+                  : otpVerified
+                    ? "Reset Password"
+                    : "Verify OTP"}
               </Button>
             </>
           )}
         </Form>
       </ModalBody>
     </Modal>
-  )
-}
+  );
+};
 
-export default ForgotPassword
+export default ForgotPassword;
+

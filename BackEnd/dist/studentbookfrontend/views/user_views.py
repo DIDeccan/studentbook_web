@@ -23,6 +23,8 @@ from studentbookfrontend.helper.api_response import api_response
 import random
 from studentbookfrontend.models import *
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+
 # from rest_framework.exceptions import ValidationError
 
 # Create your views here.
@@ -109,7 +111,7 @@ class ClassListAPIView(APIView):
     # permission_classes = [IsAuthenticated]
     queryset = Class.objects.all()
     def get(self, request, format=None):
-        classes = Class.objects.all()
+        classes = Class.objects.all().order_by('id')
         serializer = ClassSerializer(classes, many=True)    
         return api_response(
             message="Class List Data.",
@@ -267,11 +269,14 @@ class LogoutView(APIView):
                     token = RefreshToken(refresh_token.token)
                     token.blacklist()
 
+            user = request.user
+            user.logout_time =  timezone.now() # Update logout time
+            user.save(update_fields=["logout_time"])
 
             return api_response(
                 message="Logged out successfully.",
                 message_type="success",
-                status_code=status.HTTP_205_RESET_CONTENT
+                status_code=status.HTTP_200_OK
                         )
 
         except TokenError:
@@ -334,13 +339,37 @@ class ForgotPasswordAPIView(APIView):
             user = User.objects.filter(phone_number=user_name).first()
 
         otp = json_data.get("otp")
-        print(otp)
         new_password = json_data.get("new_password")
         confirm_new_password = json_data.get("confirm_new_password")
 
-        if otp and new_password and confirm_new_password:
-            if not all([user_name, otp, new_password, confirm_new_password]):
-                # return Response({"message": "All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+        # Step 1: Verify OTP
+        if otp and not new_password and not confirm_new_password:
+            if not all([user, otp]):
+                return api_response(
+                message="User and Otp are required.",
+                message_type="error",
+                status_code=status.HTTP_400_BAD_REQUEST
+                        )
+
+
+            if user.otp == otp:
+                user.otp_verified = True
+                return api_response(
+                message=" Otp verified successfully.",
+                message_type="success",
+                status_code=status.HTTP_200_OK
+                        )
+
+            else:
+                return api_response(
+                message="Invalid User or OTP not verified.",
+                message_type="error",
+                status_code=status.HTTP_400_BAD_REQUEST
+                        )
+
+
+        if not otp and new_password and confirm_new_password:
+            if not all([ new_password, confirm_new_password]):
                 return api_response(
                 message="All fields are required.",
                 message_type="error",
@@ -354,31 +383,19 @@ class ForgotPasswordAPIView(APIView):
                 message_type="error",
                 status_code=status.HTTP_400_BAD_REQUEST
                         )
-
-            # user = User.objects.filter(email=user_name, otp=otp).first()
-            if user.otp == otp:
+            if user and user.otp_verified:
                 user.set_password(new_password)
-                user.otp = None
-                user.otp_verified = True 
+                user.otp_verified = True
+                user.otp = None  # Clear OTP after successful password reset
                 user.save()
-                # return Response({"message": "Password reset successfully."}, status=status.HTTP_200_OK)
                 return api_response(
-                message="Password reset successfully.",
-                message_type="success",
-                status_code=status.HTTP_200_OK
-                        )
-
-            else:
-                # return Response({"message": "Invalid email or OTP not verified."}, status=status.HTTP_400_BAD_REQUEST)
-                return api_response(
-                message="Invalid email or OTP not verified.",
-                message_type="error",
-                status_code=status.HTTP_400_BAD_REQUEST
-                        )
+                    message="Password reset successfully.",
+                    message_type="success",
+                    status_code=status.HTTP_200_OK
+                )
 
 
         else:
-            # return Response({"message": "Invalid request."}, status=status.HTTP_400_BAD_REQUEST)
             return api_response(
                 message="Invalid request.",
                 message_type="error",
@@ -391,15 +408,16 @@ class StudentRegisterAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         json_data = request.data
-
-        try:
-            validate_email(json_data.get('email'))
-        except ValidationError as e:
-            return api_response(
-                message="Invalid email format.",
-                message_type="error",
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
+        user = None
+        if json_data.get('email'):
+            try:
+                validate_email(json_data.get('email'))
+            except ValidationError as e:
+                return api_response(
+                    message="Invalid email format.",
+                    message_type="error",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
         
         try:
             phone_number = validate_phone_number(json_data.get('phone_number'))
@@ -415,10 +433,11 @@ class StudentRegisterAPIView(APIView):
             user = User.objects.get(phone_number=json_data.get('phone_number'))
 
         except User.DoesNotExist:
-            try:
-                user = User.objects.get(email=json_data.get('email'))
-            except User.DoesNotExist:
-                user = None
+            if json_data.get('email'):
+                try:
+                    user = User.objects.get(email=json_data.get('email'))
+                except User.DoesNotExist:
+                    user = None
 
         if user:
             if not user.is_active and not user.otp_verified:
@@ -439,7 +458,7 @@ class StudentRegisterAPIView(APIView):
                 )
         else:
 
-            class_name = json_data['student_class']
+            class_name = json_data['class_id']
             try:
                 class_obj = Class.objects.get(id=class_name)
             except Class.DoesNotExist:
@@ -577,7 +596,7 @@ class ChangePasswordAPIView(APIView):
 class ClassListDemoVideosApi(APIView):
 
     def get(self, request, *args, **kwargs):
-        class_list = Class.objects.all()
+        class_list = Class.objects.all().order_by('id')
         data = []
 
         for class_data in class_list:
@@ -602,6 +621,7 @@ class ResendOtpAPIView(APIView):
     def post(self, request, *args, **kwargs):
         json_data = request.data
         phone_number = json_data.get('phone_number',None)
+        new_phone_number = json_data.get('new_phone_number',None)
         if phone_number is None:
             return api_response(
                             message="Provide Phone Number",
@@ -615,13 +635,16 @@ class ResendOtpAPIView(APIView):
 
         if not user:
             return api_response(
-                            message="User Not Fonund",
+                            message="User Not Found",
                             message_type="error",
                             status_code=status.HTTP_400_BAD_REQUEST
                         )
         
         # send_otp_email(user,'Registration OTP')
-        responce = send_otp_phone_number(user,'Registration OTP')
+        if phone_number and not new_phone_number:
+            responce = send_otp_phone_number(user,'Registration OTP')
+        elif phone_number and new_phone_number:
+            responce = send_otp_newphone_number(user,'OTP For Phone number change',new_phone_number)
 
         return responce
     

@@ -44,17 +44,19 @@ class SubjectAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'course' ]
     list_filter = ['course',]
 
-class UnitAdmin(admin.ModelAdmin):
-    list_display = ['id', 'unit_name' ,'course' ,'subject']
+class SemesterAdmin(admin.ModelAdmin):
+    list_display = ['id', 'semester_name' ,'course' ,'subject']
     list_filter = ['course','subject']
 
 class ChapterAdmin(admin.ModelAdmin):
-    list_display = ['id','chapter_name' ,'unit' ,'course' ,'subject']
-    list_filter = ['course','subject','unit']
+    list_display = ['id','chapter_name' ,'semester' ,'course' ,'subject']
+    list_filter = ['course','subject','semester']
 
-class TopicAdmin(admin.ModelAdmin):
-    list_display = ['id','topic_name','chapter_name' ,'unit' ,'course' ,'subject']
-    list_filter = ['course','subject','unit','chapter_name']
+class SubChapterAdmin(admin.ModelAdmin):
+    list_display = ['id','subchapter' ,'parent_subchapter','chapter' ,'semester','course' ,'subject']
+    list_filter = ['course','subject','semester','chapter']
+
+
 
 class SubTopicAdmin(admin.ModelAdmin):
     list_display = ['id','subtopic_name','topic_name','chapter_name' ,'unit','subject','course']
@@ -65,10 +67,9 @@ class GeneralContentAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Subject,SubjectAdmin)
-admin.site.register(Unit,UnitAdmin)
+admin.site.register(Semester,SemesterAdmin)
 admin.site.register(Chapter,ChapterAdmin)
-admin.site.register(Topic,TopicAdmin)
-admin.site.register(SubTopic,SubTopicAdmin)
+admin.site.register(Subchapter,SubChapterAdmin)
 admin.site.register(GeneralContent,GeneralContentAdmin)
 
 

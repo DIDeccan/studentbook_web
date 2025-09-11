@@ -38,6 +38,7 @@ import Register from './Register'
 import LoginBasic from './LoginBasic'
 import Footer from '../../../@core/layouts/components/footer'
 import PaymentModal from "./PaymentModal";
+import ForgotPassword from './ForgotPassword'
 
 const ToastContent = ({ t, name, role }) => {
   return (
@@ -85,6 +86,7 @@ const Login = () => {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
 
+  const [forgotOpen, setForgotOpen] = useState(false);
   useEffect(() => {
     dispatch(fetchClasses());
   }, [dispatch]);
@@ -162,7 +164,9 @@ const Login = () => {
             >
               Sign Up
             </Button>
-            <Button color="primary" className="me-2" onClick={toggleLoginModal}>Log In</Button>
+
+
+            <Button color="primary" className="me-2" onClick={() => setLoginModalOpen(true)}>Log In</Button>
           </div>
         </div>
         <Register
@@ -180,7 +184,6 @@ const Login = () => {
           toggle={() => setPaymentOpen(!paymentOpen)}
           classInfo={selectedClass}
         />
-
         <LoginBasic
           isOpen={loginModalOpen}
           toggle={toggleLoginModal}

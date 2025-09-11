@@ -3,10 +3,23 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.utils import timezone
 from datetime import timedelta
 from smart_selects.db_fields import ChainedForeignKey
+import datetime
 
 # Create your models here.
 
+def generate_transaction_id():
+    today = datetime.date.today().strftime("%Y%m%d")  # e.g. 20250903
+    last_order = SubscriptionOrder.objects.filter(
+        transaction_id__startswith=f"TXN{today}"
+    ).order_by("id").last()
 
+    if last_order and last_order.transaction_id:
+        last_number = int(last_order.transaction_id[-4:])  # last 4 digits
+        new_number = last_number + 1
+    else:
+        new_number = 1
+
+    return f"TXN{today}{new_number:04d}"
 #User models
 
 class School(models.Model):
@@ -36,36 +49,6 @@ class StudentPackage(models.Model):
 
     def __str__(self):
         return f"{self.student.email} - {self.course.name}"
-
-# class UserManager(BaseUserManager):
-#     def create_user(self, email, password=None):
-#         """
-#         Creates and saves a User with the given email, date of
-#         birth and password.
-#         """
-#         if not email:
-#             raise ValueError("Users must have an email address")
-
-#         user = self.model(
-#             email=self.normalize_email(email),
-#         )
-
-#         user.set_password(password)
-#         user.save(using=self._db)
-#         return user
-
-#     def create_superuser(self, email, password=None):
-#         """
-#         Creates and saves a superuser with the given email, date of
-#         birth and password.
-#         """
-#         user = self.create_user(
-#             email,
-#             password=password,
-#         )
-#         user.is_superuser = True
-#         user.save(using=self._db)
-#         return user
 
 
 class UserManager(BaseUserManager):
@@ -127,6 +110,7 @@ class User(AbstractBaseUser):
     otp = models.CharField(max_length=50,null=True,blank=True)
     user_type = models.CharField(max_length=20, null=True,choices=USER_TYPE_CHOICES)
     login_time = models.DateTimeField(null=True)
+    logout_time = models.DateTimeField(null=True)
     otp_verified = models.BooleanField(default=False)
     registered_date = models.DateTimeField(auto_now_add=True)
     objects = UserManager()
@@ -207,6 +191,8 @@ class SubscriptionOrder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     payment_status = models.CharField(max_length=20,choices=PAYMENT_STATUS,default="pending")
+    transaction_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    payment_mode = models.CharField(max_length=50, null=True, blank=True)
 
     subscription_start = models.DateField(default=timezone.now)
     subscription_end = models.DateField(blank=True, null=True)
@@ -216,6 +202,9 @@ class SubscriptionOrder(models.Model):
         Automatically set subscription_end to 1 year (365 days) after
         subscription_start if not provided manually.
         """
+        if not self.transaction_id:  # only generate if missing
+            self.transaction_id = generate_transaction_id()
+
         if not self.subscription_end:
             self.subscription_end = self.subscription_start + timedelta(days=365)
         super().save(*args, **kwargs)
@@ -248,23 +237,42 @@ class Subject(models.Model):
         return self.name
     
 
-class Unit(models.Model):
+# class Unit(models.Model):
+
+#     """
+#     Represents a unit or chapter within a specific subject and class.
+#     Stores unit name, the related subject, and the class it belongs to.
+#     """
+
+#     unit_name = models.CharField(max_length=100)
+#     description = models.CharField(max_length=255, blank=True, null=True)
+#     course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='units')
+#     subject = ChainedForeignKey(Subject, chained_field="course",
+#         chained_model_field="course" ,on_delete=models.CASCADE, related_name="units")
+    
+
+#     def __str__(self):
+#         return self.unit_name
+
+class Semester(models.Model):
 
     """
-    Represents a unit or chapter within a specific subject and class.
-    Stores unit name, the related subject, and the class it belongs to.
+    Represents a Semester or chapter within a specific subject and class.
+    Stores Semester name, the related subject, and the class it belongs to.
     """
-
-    unit_name = models.CharField(max_length=100)
-    description = models.CharField(max_length=255, blank=True, null=True)
-    course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='units')
+    
+    semester_name = models.CharField(max_length=100)
+    semester_number = models.IntegerField(null=True, blank=True)
+    course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='semester')
     subject = ChainedForeignKey(Subject, chained_field="course",
-        chained_model_field="course" ,on_delete=models.CASCADE, related_name="units")
+        chained_model_field="course" ,on_delete=models.CASCADE, related_name="semester")
     
 
     def __str__(self):
-        return self.unit_name
-    
+        return self.semester_name
+
+
+
 class Chapter(models.Model):
     """
     Represents a chapter within a specific unit, subject, and class.
@@ -275,47 +283,44 @@ class Chapter(models.Model):
     chapter_icon = models.ImageField(upload_to='chapter_icons/', blank=True, null=True)
     course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='chapters')
     subject = ChainedForeignKey(Subject, chained_field="course",chained_model_field="course" ,on_delete=models.CASCADE, related_name="chapters")
-    unit = ChainedForeignKey(Unit,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='chapters')
+    semester = ChainedForeignKey(Semester,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='chapters',null=True, blank=True)
     
 
     def __str__(self):
         return self.chapter_name
 
-class Topic(models.Model):
 
-    """
-    Represents a topic within a specific chapter, unit, subject, and class.
-    Stores topic name, optional description, and links to its chapter, unit, subject, and class.
-    """
+class Subchapter(models.Model):
+    subchapter = models.CharField(max_length=20)
+    parent_subchapter = models.CharField(max_length=50, blank=True)
+    course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='subchapter')
+    subject = ChainedForeignKey(Subject, chained_field="course",chained_model_field="course" ,on_delete=models.CASCADE, related_name="subchapter")
+    semester = ChainedForeignKey(Semester,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='subchapter')
+    chapter = ChainedForeignKey(Chapter, chained_field="semester",chained_model_field="semester" ,on_delete=models.CASCADE, related_name='subchapter')
+    video_name = models.CharField(max_length=255)
+    video_url = models.URLField()   # final S3/CloudFront URL
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    topic_name = models.CharField(max_length=255)
-    description = models.CharField(max_length=255, blank=True, null=True)
-    course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='topics')
-    subject = ChainedForeignKey(Subject, chained_field="course",chained_model_field="course" ,on_delete=models.CASCADE, related_name="topics")
-    unit = ChainedForeignKey(Unit,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='topics')
-    chapter_name = ChainedForeignKey(Chapter, chained_field="unit",chained_model_field="unit" ,on_delete=models.CASCADE, related_name='topics')
+    class Meta:
+        indexes = [
+            models.Index(fields=["course", "subject", "semester", "chapter", "subchapter"]),
+        ]
 
-    def __str__(self):
-        return self.topic_name   
-
-
-class SubTopic(models.Model):
-
-    """
-    Represents a subtopic within a specific topic, chapter, unit, subject, and class.
-    Stores subtopic name, optional description, and links to its topic, chapter, unit, subject, and class.
-    """
-
-    subtopic_name = models.CharField(max_length=255)
-    description = models.CharField(max_length=255, blank=True, null=True)
-    course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='subtopics')
-    subject = ChainedForeignKey(Subject, chained_field="course",chained_model_field="course" ,on_delete=models.CASCADE, related_name="subtopics")
-    unit = ChainedForeignKey(Unit,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='subtopics')
-    chapter_name = ChainedForeignKey(Chapter, chained_field="unit",chained_model_field="unit" ,on_delete=models.CASCADE, related_name='subtopics')
-    topic_name = ChainedForeignKey(Topic,chained_field = 'chapter_name' ,on_delete=models.CASCADE, related_name='subtopics')
+    def save(self, *args, **kwargs):
+        """
+        Automatically set parent_subchapter:
+        - If subchapter = "5.1.1" → parent = "5.1"
+        - If subchapter = "5.1"   → parent = "5.1" (itself, since top-level)
+        """
+        if "." in self.subchapter:
+            self.parent_subchapter = ".".join(self.subchapter.split(".")[:-1])
+        else:
+            self.parent_subchapter = self.subchapter
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.subtopic_name
+        return f"{self.video_name} (Class {self.class_id}, Subject {self.subject_id})"
+
         
 class GeneralContent(models.Model):
     """

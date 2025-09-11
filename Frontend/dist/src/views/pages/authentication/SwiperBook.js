@@ -1,16 +1,11 @@
-// ** Third Party Components
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Navigation, Pagination } from 'swiper'
 
-// ** Swiper Styles
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
-
 // ** Reactstrap Imports
 import { Card, CardHeader, CardTitle, CardBody, Button } from 'reactstrap'
-
-// ** Images
 import img1 from '../../../assets/images/banner/img1.png'
 import img2 from '../../../assets/images/banner/img2.png'
 import img3 from '../../../assets/images/banner/img3.png'
@@ -84,6 +79,7 @@ const SwiperBook = ({ isRtl }) => {
                     </p>
                   </div>
                 </div>
+
               </SwiperSlide>
             ))}
           </Swiper>

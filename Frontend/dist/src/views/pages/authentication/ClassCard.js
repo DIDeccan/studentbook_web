@@ -1,54 +1,38 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Card,
-  CardBody,
-  CardTitle,
-  CardText,
-  Button,
-  Spinner,
-} from "reactstrap";
+import { Card, CardBody, CardTitle, CardText, Button, Spinner } from "reactstrap";
 import Register from "./Register";
 import PaymentModal from "./PaymentModal";
+import { updateUserData } from "../../../redux/authentication";
 import { fetchClasses } from "../../../redux/classSlice";
+import { ChevronLeft, ChevronRight } from "react-feather";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper";
+import "swiper/css";
+import "swiper/css/navigation";
 
 const Classcard = () => {
   const dispatch = useDispatch();
+  const { data: classData, loading, error } = useSelector((state) => state.classes);
+  const { userData, accessToken } = useSelector((state) => state.auth);
 
-  const { data: classData, loading, error } = useSelector(
-    (state) => state.classes
-  );
-
-  const [columns, setColumns] = useState(5);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
-  const [authData, setAuthData] = useState(null);
-
-  const toggleRegister = () => setIsRegisterOpen(!isRegisterOpen);
-  const togglePayment = () => setIsPaymentOpen(!isPaymentOpen);
 
   useEffect(() => {
-    const storedAuth = localStorage.getItem("authData");
-    if (storedAuth) setAuthData(JSON.parse(storedAuth));
-  }, []);
 
-  const registeredClassId =
-    authData?.registrationData?.classLevel || authData?.user?.student_class;
+    if (!userData) {
+      const storedProfile = localStorage.getItem("studentProfileData");
+      if (storedProfile) {
+        dispatch(updateUserData(JSON.parse(storedProfile)));
+      }
+    }
+  }, [dispatch, userData]);
 
-  useEffect(() => {
-    const updateColumns = () => {
-      const width = window.innerWidth;
-      if (width < 480) setColumns(1);
-      else if (width < 768) setColumns(2);
-      else if (width < 992) setColumns(3);
-      else if (width < 1200) setColumns(4);
-      else setColumns(5);
-    };
-    updateColumns();
-    window.addEventListener("resize", updateColumns);
-    return () => window.removeEventListener("resize", updateColumns);
-  }, []);
+  const registeredClassId = userData?.student_class ? String(userData.student_class) : null;
+  const isPaid = userData?.is_paid || false;
+
 
   useEffect(() => {
     dispatch(fetchClasses());
@@ -56,16 +40,35 @@ const Classcard = () => {
 
   const handleSubscribe = (cls) => {
     setSelectedClass(cls);
-    const token = authData?.accessToken;
-    if (token) setIsPaymentOpen(true);
-    else setIsRegisterOpen(true);
+
+    if (accessToken) {
+      setIsPaymentOpen(true);
+    } else {
+      setIsRegisterOpen(true);
+    }
+
+  };
+
+  const handlePaymentSuccess = () => {
+    const updatedProfile = {
+      ...userData,
+      is_paid: true,
+      student_class: selectedClass?.id,
+    };
+
+    dispatch(updateUserData(updatedProfile));
+    localStorage.setItem("studentProfileData", JSON.stringify(updatedProfile));
+
+    setIsPaymentOpen(false);
   };
 
   return (
+
     <div style={{ padding: "2rem" }}>
+
       <h4
-        className="display-4 text-primary"
         style={{
+
               background: "linear-gradient(90deg, #7db2ddff, #e52e71)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -95,10 +98,61 @@ const Classcard = () => {
           }}
         >
           {classData.map((cls) => {
-            const isDifferentClass =
-              registeredClassId && registeredClassId !== cls.id;
+            const classId = String(cls.id);
+            const isUserClass = registeredClassId === classId;
+            const isLoggedIn = !!accessToken;
+
+            let buttonContent;
+
+            if (isUserClass && isPaid) {
+              buttonContent = (
+                <Button color="success" block disabled>
+                  Subscribed
+                </Button>
+              );
+
+            } else if (isUserClass && !isPaid) {
+              if (isLoggedIn) {
+                buttonContent = (
+                  <Button
+                    block
+                    color=""
+                    style={{ backgroundColor: "#a435f0", color: "white" }}
+                    onClick={() => handleSubscribe(cls)}
+                  >
+                    Subscribe
+                  </Button>
+                );
+              } else {
+                buttonContent = (
+                  <Button color="secondary" block disabled>
+                    Done Subscription
+                  </Button>
+                );
+              }
+
+            } else if (registeredClassId && !isUserClass && !isPaid && isLoggedIn) {
+              buttonContent = (
+                <Button color="secondary" block disabled>
+                  Not Available
+                </Button>
+              );
+
+            } else {
+              buttonContent = (
+                <Button
+                  block
+                  color=""
+                  style={{ backgroundColor: "#a435f0", color: "white" }}
+                  onClick={() => handleSubscribe(cls)}
+                >
+                  Subscribe
+                </Button>
+              );
+            }
 
             return (
+
               <Card
                 key={cls.id}
                 style={{
@@ -190,13 +244,19 @@ const Classcard = () => {
               </Card>
             );
           })}
-        </div>
+        </Swiper>
       )}
 
-      {/* Signup Modal */}
+      <div className="swiper-button-prev-custom" style={arrowStyle("75px")}>
+        <ChevronLeft size={20} color="#333" />
+      </div>
+      <div className="swiper-button-next-custom" style={arrowStyle(undefined, "100px")}>
+        <ChevronRight size={20} color="#333" />
+      </div>
+
       <Register
         isOpen={isRegisterOpen}
-        toggle={toggleRegister}
+        toggle={() => setIsRegisterOpen(!isRegisterOpen)}
         openPayment={() => {
           setIsRegisterOpen(false);
           setIsPaymentOpen(true);
@@ -204,14 +264,32 @@ const Classcard = () => {
         selectedClass={selectedClass}
       />
 
-      {/* Payment Modal */}
       <PaymentModal
         isOpen={isPaymentOpen}
-        toggle={togglePayment}
+        toggle={() => setIsPaymentOpen(!isPaymentOpen)}
         classInfo={selectedClass}
+        onSuccess={handlePaymentSuccess}
       />
     </div>
   );
 };
+
+const arrowStyle = (left, right) => ({
+  position: "absolute",
+  top: "50%",
+  left,
+  right,
+  transform: "translateY(-50%)",
+  width: "40px",
+  height: "40px",
+  borderRadius: "50%",
+  background: "#fff",
+  boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  zIndex: 10,
+});
 
 export default Classcard;

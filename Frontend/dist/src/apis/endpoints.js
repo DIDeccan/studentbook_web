@@ -13,7 +13,8 @@ const API_ENDPOINTS = {
     ACTIVATE_OTP: `${BASE_URL}/verify-otp`,      
     RESEND_OTP: `${BASE_URL}/resend_otp`,
     FORGOT_PASSWORD: `${BASE_URL}/user-forgot-password`,
-    CHANGE_PASSWORD: `${BASE_URL}/user-change-password`
+    CHANGE_PASSWORD: `${BASE_URL}/user-change-password`,
+    REFRESH: `${BASE_URL}/token_refresh`, 
   },
 
   STUDENTS: {

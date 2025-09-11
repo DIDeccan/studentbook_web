@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate
 import re
 from django.utils import timezone
 from rest_framework import status
+from django.contrib.auth.models import update_last_login
 
 
 class CustomAPIException(APIException):
@@ -55,6 +56,16 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # data = super().validate(attrs)
         username = attrs.get("phone_number")
         password = attrs.get("password")
+        # user = authenticate(request=self.context.get('request'), email=username, password=password)
+        user = Student.objects.filter(phone_number=username).first()
+        
+        if user is None:
+            # raise AuthenticationFailed("Invalid credentials.")
+            raise CustomAPIException(
+                message= "User Not Found.",
+                message_type= "error",
+                data= None
+            )
         user = authenticate(request=self.context.get('request'), email=username, password=password)
         
         if user is None:
@@ -99,12 +110,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Add custom claims
         data = super().validate(attrs)
+        update_last_login(None, self.user)
         data['user_type'] = self.user.user_type
         data['is_active'] = self.user.is_active
         data['message_type'] = "success"
         if user.user_type == 'student':
             data['student_id'] = user.student.id if hasattr(user, 'student') else None
-            data['course_id'] = user.student.student_class.id if hasattr(user, 'student') and user.student.student_class else None
+            data['class_id'] = user.student.student_class.id if hasattr(user, 'student') and user.student.student_class else None
             data['is_paid'] = StudentPackage.objects.filter(student=user).exists()
 
         return data
@@ -121,19 +133,22 @@ class SchoolSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class StudentPackageSerializer(serializers.ModelSerializer):
-    course = ClassSerializer(read_only=True)  # nested course info
+    # course = ClassSerializer(read_only=True)  # nested course info
+    class_id = serializers.IntegerField(source='course.id', read_only=True)
+    student_package_id = serializers.IntegerField(source='id', read_only=True)
 
     class Meta:
         model = StudentPackage
-        fields = ['id', 'course', 'price', 'subscription_taken_from', 'subscription_valid_till']
+        fields = ['student_package_id', 'class_id', 'price', 'subscription_taken_from', 'subscription_valid_till']
 
 class StudentSerializer(serializers.ModelSerializer):
     student_packages = StudentPackageSerializer(many=True, read_only=True)
-
+    class_id = serializers.IntegerField(source='student_class.id', read_only=True)
+    student_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = Student
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone_number','user_type','student_class','student_packages']
-        read_only_fields = ['user_type','student_class', 'student_packages']
+        fields = ['student_id', 'email', 'first_name', 'last_name', 'phone_number','profile_image',"address", "city", "state",'user_type','class_id','student_packages']
+        read_only_fields = ['user_type','class_id', 'student_packages']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
