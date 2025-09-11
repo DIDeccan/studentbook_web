@@ -45,8 +45,8 @@ class SubjectAdmin(admin.ModelAdmin):
     list_filter = ['course',]
 
 class SemesterAdmin(admin.ModelAdmin):
-    list_display = ['id', 'semester_name' ,'course' ,'subject']
-    list_filter = ['course','subject']
+    list_display = ['id', 'semester_name']
+    # list_filter = ['course','subject']
 
 class ChapterAdmin(admin.ModelAdmin):
     list_display = ['id','chapter_name' ,'semester' ,'course' ,'subject']
@@ -71,5 +71,14 @@ admin.site.register(Semester,SemesterAdmin)
 admin.site.register(Chapter,ChapterAdmin)
 admin.site.register(Subchapter,SubChapterAdmin)
 admin.site.register(GeneralContent,GeneralContentAdmin)
+
+
+#student dashboard models registration
+class VideoTrackingLogAdmin(admin.ModelAdmin):
+    list_display = ['id','student','subchapter','watched_duration','completed','created_at']
+    list_filter = ['student','subchapter','completed']  
+
+
+admin.site.register(VideoTrackingLog,VideoTrackingLogAdmin)
 
 

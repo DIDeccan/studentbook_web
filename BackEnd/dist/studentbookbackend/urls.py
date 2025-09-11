@@ -23,6 +23,7 @@ urlpatterns = [
     path('', include('studentbookfrontend.urls.user_urls')),
     path('', include('studentbookfrontend.urls.razorpay_urls')),
     path('', include('studentbookfrontend.urls.course_management_urls')),
+    path('dashboard/', include('studentbookfrontend.urls.user_dashboard_urls')),
     path("chaining/", include("smart_selects.urls"))
 ]
 

@@ -143,12 +143,12 @@ class StudentPackageSerializer(serializers.ModelSerializer):
 
 class StudentSerializer(serializers.ModelSerializer):
     student_packages = StudentPackageSerializer(many=True, read_only=True)
-    class_id = serializers.IntegerField(source='student_class.id', read_only=True)
+    class_name = serializers.CharField(source='student_class.name', read_only=True)
     student_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = Student
-        fields = ['student_id', 'email', 'first_name', 'last_name', 'phone_number','profile_image',"address", "city", "state",'user_type','class_id','student_packages']
-        read_only_fields = ['user_type','class_id', 'student_packages']
+        fields = ['student_id', 'email', 'first_name', 'last_name', 'phone_number','profile_image',"address", "city", "state",'user_type','class_name','student_packages']
+        read_only_fields = ['user_type','class_name', 'student_packages']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

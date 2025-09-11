@@ -4,7 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 from smart_selects.db_fields import ChainedForeignKey
 import datetime
-
+# from moviepy.editor import VideoFileClip
 # Create your models here.
 
 def generate_transaction_id():
@@ -20,6 +20,14 @@ def generate_transaction_id():
         new_number = 1
 
     return f"TXN{today}{new_number:04d}"
+
+# def get_video_duration(file_path: str) -> str:
+#     clip = VideoFileClip(file_path)
+#     duration = clip.duration  # seconds (float)
+#     minutes, seconds = divmod(int(duration), 60)
+#     hours, minutes = divmod(minutes, 60)
+#     return f"{hours:02}:{minutes:02}:{seconds:02}"
+
 #User models
 
 class School(models.Model):
@@ -263,9 +271,9 @@ class Semester(models.Model):
     
     semester_name = models.CharField(max_length=100)
     semester_number = models.IntegerField(null=True, blank=True)
-    course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='semester')
-    subject = ChainedForeignKey(Subject, chained_field="course",
-        chained_model_field="course" ,on_delete=models.CASCADE, related_name="semester")
+    # course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='semester')
+    # subject = ChainedForeignKey(Subject, chained_field="course",
+    #     chained_model_field="course" ,on_delete=models.CASCADE, related_name="semester")
     
 
     def __str__(self):
@@ -279,11 +287,15 @@ class Chapter(models.Model):
     Stores chapter name, optional description and icon, and links to its unit, subject, and class.
     """
     chapter_name = models.CharField(max_length=255)
+    chapter_number = models.IntegerField(null=True, blank=True)
     description = models.CharField(max_length=255, blank=True, null=True)
     chapter_icon = models.ImageField(upload_to='chapter_icons/', blank=True, null=True)
     course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='chapters')
     subject = ChainedForeignKey(Subject, chained_field="course",chained_model_field="course" ,on_delete=models.CASCADE, related_name="chapters")
-    semester = ChainedForeignKey(Semester,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='chapters',null=True, blank=True)
+    # semester = ChainedForeignKey(Semester,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='chapters',null=True, blank=True)
+    semester = models.ForeignKey(Semester, on_delete=models.CASCADE, related_name='chapters')
+
+    
     
 
     def __str__(self):
@@ -295,11 +307,14 @@ class Subchapter(models.Model):
     parent_subchapter = models.CharField(max_length=50, blank=True)
     course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='subchapter')
     subject = ChainedForeignKey(Subject, chained_field="course",chained_model_field="course" ,on_delete=models.CASCADE, related_name="subchapter")
-    semester = ChainedForeignKey(Semester,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='subchapter')
-    chapter = ChainedForeignKey(Chapter, chained_field="semester",chained_model_field="semester" ,on_delete=models.CASCADE, related_name='subchapter')
+    # semester = ChainedForeignKey(Semester,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='subchapter')
+    semester = models.ForeignKey(Semester, on_delete=models.CASCADE, related_name='subchapter')
+    chapter = ChainedForeignKey(Chapter, chained_field="subject",chained_model_field="subject" ,on_delete=models.CASCADE, related_name='subchapter')
     video_name = models.CharField(max_length=255)
     video_url = models.URLField()   # final S3/CloudFront URL
+    vedio_duration = models.CharField(max_length=50, blank=True, null=True)  # e.g. "15:30"
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     class Meta:
         indexes = [
@@ -319,7 +334,7 @@ class Subchapter(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.video_name} (Class {self.class_id}, Subject {self.subject_id})"
+        return f"{self.video_name} (Class {self.course}, Subject {self.subject})"
 
         
 class GeneralContent(models.Model):
@@ -334,3 +349,35 @@ class GeneralContent(models.Model):
 
     def __str__(self):
         return self.title
+    
+
+
+
+# tracking models
+class VideoTrackingLog(models.Model):
+    student = models.ForeignKey("Student", on_delete=models.CASCADE, related_name="videotracking_log")
+    subchapter = models.ForeignKey(Subchapter, on_delete=models.CASCADE, related_name="videotracking_log")
+    watched_duration = models.DurationField(default=0)  # actual time user watched
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"{self.student} - {self.subchapter} ({self.watched_duration})"
+
+
+# class AssessmentResult(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assessments")
+#     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+#     score = models.IntegerField()
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+# class AssignmentLog(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assignments")
+#     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+#     status = models.CharField(max_length=20, choices=[("attended", "Attended"), ("pending", "Pending")])
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+# class ActivityLog(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="activities")
+#     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+#     duration = models.DurationField()  # time spent on this activity
+#     created_at = models.DateTimeField(auto_now_add=True)
