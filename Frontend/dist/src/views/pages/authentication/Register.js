@@ -184,15 +184,55 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
         <Row className="g-0 h-100">
           <Col
             md="6"
-            className="d-none d-md-flex align-items-center justify-content-center p-4"
-            style={{ backgroundColor: "#f8f8f8" }}
+            className="d-none d-md-flex align-items-center justify-content-center p-4 text-white"
+            style={{
+              background: "linear-gradient(135deg, #8b56c4ff, #71b1dbff)",
+              color: "#fff",
+              borderTopLeftRadius: "8px",
+              borderBottomLeftRadius: "8px",
+              flexDirection: "column",
+              textAlign: "center"
+            }}
           >
-            <div className="text-center">
-              <h4 className="mt-2">Welcome to Student Book!</h4>
-              <p className="text-muted">Start your journey with us</p>
-            </div>
-          </Col>
+            <div className="px-3">
+              <h2
+                className="fw-bold mb-2"
+                style={{
+                  fontSize: "28px",
+                  background: "linear-gradient(90deg, #181717ff, #e52e71)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1px",
+                  lineHeight: "1" // gives nice spacing between lines
+                }}
+              >
+                Welcome to <br />
+                Student Book
+              </h2>
 
+              {/* Title */}
+              <h2 className="fw-bold mb-2">Learn Smarter, Not Harder!</h2>
+
+              {/* Fun Icon / Emoji */}
+              <div style={{ fontSize: "50px", marginBottom: "1rem" }}>📚🎥</div>
+
+              {/* Subheading */}
+              <p className="mb-4" style={{ fontSize: "15px" }}>
+                Explore offline video lessons, practice tests, and interactive study tools – all designed just for you.
+              </p>
+
+              {/* Highlighted Features */}
+              <div className="text-start small d-inline-block" style={{ lineHeight: "1.8" }}>
+                <p>✨ Watch engaging subject videos anytime</p>
+                <p>✨ Track your progress with colorful charts</p>
+                <p>✨ Revise faster with quizzes & test results</p>
+                <p>✨ Study offline without internet worries</p>
+              </div>
+            </div>
+          </Co
+
+          {/* Right Section */}
           <Col
             md="6"
             className="p-4"

@@ -21,6 +21,7 @@ const Classcard = () => {
   const [selectedClass, setSelectedClass] = useState(null);
 
   useEffect(() => {
+
     if (!userData) {
       const storedProfile = localStorage.getItem("studentProfileData");
       if (storedProfile) {
@@ -32,17 +33,20 @@ const Classcard = () => {
   const registeredClassId = userData?.student_class ? String(userData.student_class) : null;
   const isPaid = userData?.is_paid || false;
 
+
   useEffect(() => {
     dispatch(fetchClasses());
   }, [dispatch]);
 
   const handleSubscribe = (cls) => {
     setSelectedClass(cls);
+
     if (accessToken) {
       setIsPaymentOpen(true);
     } else {
       setIsRegisterOpen(true);
     }
+
   };
 
   const handlePaymentSuccess = () => {
@@ -59,21 +63,25 @@ const Classcard = () => {
   };
 
   return (
-    <div style={{ padding: "0 100px", position: "relative" }}>
+
+    <div style={{ padding: "2rem" }}>
+
       <h4
         style={{
-          textAlign: "center",
-          fontSize: "2.5rem",
-          marginBottom: "24px",
-          fontWeight: "700",
-          color: "#1c1d1f",
-        }}
+
+              background: "linear-gradient(90deg, #7db2ddff, #e52e71)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              fontSize: '3rem', 
+              letterSpacing: '2px',
+              textAlign: "center"
+            }}
       >
         Student Access
       </h4>
 
       {loading ? (
-        <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <div style={{ textAlign: "center", marginTop: "5rem" }}>
           <Spinner color="primary" />
         </div>
       ) : error ? (
@@ -81,19 +89,12 @@ const Classcard = () => {
           Error loading classes: {error}
         </div>
       ) : (
-        <Swiper
-          modules={[Navigation]}
-          navigation={{
-            nextEl: ".swiper-button-next-custom",
-            prevEl: ".swiper-button-prev-custom",
-          }}
-          spaceBetween={20}
-          slidesPerView={4}
-          breakpoints={{
-            1200: { slidesPerView: 4 },
-            992: { slidesPerView: 3 },
-            768: { slidesPerView: 2 },
-            480: { slidesPerView: 1 },
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            gap: "1.5rem",
+            padding: "1rem",
           }}
         >
           {classData.map((cls) => {
@@ -151,101 +152,96 @@ const Classcard = () => {
             }
 
             return (
-              <SwiperSlide key={cls.id}>
-                <Card
-                  style={{
-                    maxWidth: "290px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    overflow: "hidden",
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {cls.vedio_url ? (
-                    <video
-                      controls
-                      style={{
-                        width: "100%",
-                        height: "160px",
-                        objectFit: "cover",
-                        borderBottom: "1px solid #eee",
-                      }}
-                    >
-                      <source src={cls.vedio_url} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  ) : (
-                    <div
-                      style={{
-                        height: "160px",
-                        background:
-                          "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#fff",
-                        fontSize: "1.2rem",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      No Demo Video
-                    </div>
-                  )}
 
-                  <CardBody
+              <Card
+                key={cls.id}
+                style={{
+                  width: "100%",
+                  borderRadius: "20px",
+                  boxShadow: "0 15px 35px rgba(0,0,0,0.1)",
+                  overflow: "hidden",
+                  transition: "transform 0.3s, box-shadow 0.3s",
+                }}
+                className="class-card"
+              >
+                {cls.vedio_url ? (
+                  <video
+                    controls
+                    style={{ width: "100%", height: "220px", borderRadius: "20px 20px 0 0", objectFit: "cover" }}
+                  >
+                    <source src={cls.vedio_url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <div
                     style={{
-                      padding: "16px",
-                      flex: "1",
+                      height: "220px",
+                      background: "linear-gradient(135deg, #a8edea, #fed6e3)",
                       display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      fontWeight: "600",
+                      fontSize: "1.2rem",
                     }}
                   >
-                    <div>
-                      <CardTitle
-                        tag="h5"
-                        style={{
-                          fontWeight: "600",
-                          fontSize: "1rem",
-                          marginBottom: "8px",
-                          color: "#1c1d1f",
-                          minHeight: "30px",
-                        }}
-                      >
-                        {cls.name}
-                      </CardTitle>
+                    No Demo Video
+                  </div>
+                )}
 
-                      <CardText
-                        style={{
-                          fontSize: "0.9rem",
-                          color: "#555",
-                          minHeight: "40px",
-                        }}
-                      >
-                        {cls.discription?.length > 70
-                          ? cls.discription.slice(0, 70) + "..."
-                          : cls.discription ||
-                          "Explore engaging lessons with demo content."}
-                      </CardText>
-                    </div>
+                <CardBody style={{ padding: "1.5rem" }}>
+                  <CardTitle
+                    tag="h5"
+                    style={{ fontWeight: "700", fontSize: "1.3rem", marginBottom: "0.5rem" }}
+                  >
+                    {cls.name}
+                  </CardTitle>
+                  <CardText style={{ color: "#555", marginBottom: "1rem" }}>
+                    {cls.discription || "Explore engaging lessons with demo content."}
+                  </CardText>
+                  <CardText
+                    className="fw-bold"
+                    style={{ color: "#1e7e34", fontSize: "1.1rem", marginBottom: "1rem" }}
+                  >
+                    ₹{cls.cost}
+                  </CardText>
 
-                    <div>
-                      <CardText
-                        style={{
-                          fontWeight: "700",
-                          color: "#1c1d1f",
-                          fontSize: "1rem",
-                          margin: "12px 0",
-                        }}
-                      >
-                        ₹{cls.cost}
-                      </CardText>
-                      {buttonContent}
-                    </div>
-                  </CardBody>
-                </Card>
-              </SwiperSlide>
+                  {isDifferentClass ? (
+                    <Button
+                      color="secondary"
+                      block
+                      disabled
+                      style={{
+                        borderRadius: "50px",
+                        padding: "0.6rem 0",
+                        fontWeight: "600",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      Not Available
+                    </Button>
+                  ) : (
+                    <Button
+                      color="primary"
+                      block
+                      onClick={() => handleSubscribe(cls)}
+                      style={{
+                        borderRadius: "50px",
+                        padding: "0.6rem 0",
+                        fontWeight: "600",
+                        letterSpacing: "0.5px",
+                        background: "linear-gradient(90deg, #4facfe, #00f2fe)",
+                        border: "none",
+                        transition: "transform 0.2s",
+                      }}
+                      onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
+                      onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
+                    >
+                      Subscribe
+                    </Button>
+                  )}
+                </CardBody>
+              </Card>
             );
           })}
         </Swiper>
