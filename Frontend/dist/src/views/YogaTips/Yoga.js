@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import {
-  Container, Row, Col, Card, CardBody, CardTitle, CardText,
+  Row, Col, Card, CardBody, CardTitle, CardText,
   Button, Badge, Progress, Input
 } from "reactstrap";
 import { Star, Clock } from "react-feather";
@@ -24,77 +24,137 @@ const Yoga = () => {
   }, []);
 
   return (
-    <Container className="my-5">
-      <div className="p-4 rounded shadow-sm" style={{ backgroundColor: "#fff" }}>
-        
-        <Row className="align-items-center mb-4">
-          <Col md="6">
-            <h4 className="fw-bold">Yoga Classes</h4>
-            <p className="text-muted mb-0">
-              Total {videos.length} yoga sessions available
-            </p>
+    <Fragment>
+      {/* Header */}
+      <Row className="align-items-center mb-4">
+        <Col md="6">
+          <h2 className="fw-bold">🌈 Yoga Classes for Kids</h2>
+          <p className="text-blod mb-0">
+            🎥 Total {videos.length} yoga sessions waiting for you!
+          </p>
+        </Col>
+        <Col md="6" className="d-flex justify-content-end align-items-center">
+          <Input
+            type="select"
+            className="me-3 rounded-pill"
+            style={{ width: "180px" }}
+          >
+            <option>All Levels</option>
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+            <option>Wellness</option>
+            <option>Therapy</option>
+          </Input>
+          <div className="form-check form-switch text-white">
+            <input className="form-check-input" type="checkbox" id="hideCompleted" />
+            <label className="form-check-label ms-2" htmlFor="hideCompleted">
+              Hide completed
+            </label>
+          </div>
+        </Col>
+      </Row>
+
+      {/* Video Cards */}
+      <Row>
+        {videos.map((video) => (
+          <Col md="4" sm="6" xs="12" className="mb-4 d-flex justify-content-center" key={video.id}>
+            <Card
+              className="h-100 shadow-lg border-0"
+              style={{
+                width: "450px",  // 🔹 fixed width for all cards
+                borderRadius: "20px",
+                backgroundColor: "#ffffff",
+                transition: "transform 0.3s"
+              }}
+            >
+              <video
+                width="100%"
+                height="180"
+                controls
+                style={{ borderTopLeftRadius: "20px", borderTopRightRadius: "20px" }}
+              >
+                <source src={video.videoUrl} type="video/mp4" />
+              </video>
+              <CardBody>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <Badge
+                    style={{
+                      background: "linear-gradient(to right, #ff6a00, #ee0979)",
+                      borderRadius: "10px",
+                      fontSize: "0.75rem"
+                    }}
+                  >
+                    {video.category}
+                  </Badge>
+                  <div className="d-flex align-items-center">
+                    <span className="me-1 fw-bold">{video.rating}</span>
+                    <Star size={16} color="gold" />
+                    <small className="text-muted ms-1">({video.reviews})</small>
+                  </div>
+                </div>
+
+                <CardTitle
+                  tag="h5"
+                  className="fw-bold text-dark text-truncate"
+                  style={{ maxWidth: "250px" }} // 🔹 keeps long titles neat
+                >
+                  {video.title}
+                </CardTitle>
+                <CardText
+                  className="text-muted"
+                  style={{
+                    fontSize: "0.9rem",
+                    minHeight: "50px", // 🔹 keeps all card descriptions same height
+                    overflow: "hidden",
+                    textOverflow: "ellipsis"
+                  }}
+                >
+                  {video.description}
+                </CardText>
+
+                <div className="d-flex align-items-center mb-2">
+                  <Clock size={16} className="me-1 text-primary" />
+                  <small className="text-muted">{video.duration}</small>
+                </div>
+
+                <Progress
+                  value={video.progress}
+                  style={{ height: "8px", borderRadius: "10px" }}
+                  className="mb-3"
+                  color="warning"
+                />
+
+                <div className="d-flex justify-content-between">
+                  <Button
+                    style={{
+                      background: "linear-gradient(to right, #00c6ff, #0072ff)",
+                      border: "none",
+                      borderRadius: "20px",
+                      padding: "5px 15px"
+                    }}
+                    size="sm"
+                  >
+                    Start Over
+                  </Button>
+                  <Button
+                    style={{
+                      background: "linear-gradient(to right, #ff512f, #dd2476)",
+                      border: "none",
+                      borderRadius: "20px",
+                      padding: "5px 15px"
+                    }}
+                    size="sm"
+                  >
+                    {video.progress > 0 ? "Continue 🚀" : "Start Now 🎉"}
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
           </Col>
-          <Col md="6" className="d-flex justify-content-end align-items-center">
-            <Input type="select" className="me-3" style={{ width: "180px" }}>
-              <option>All Levels</option>
-              <option>Beginner</option>
-              <option>Intermediate</option>
-              <option>Advanced</option>
-              <option>Wellness</option>
-              <option>Therapy</option>
-            </Input>
-            <div className="form-check form-switch">
-              <input className="form-check-input" type="checkbox" id="hideCompleted" />
-              <label className="form-check-label ms-2" htmlFor="hideCompleted">
-                Hide completed
-              </label>
-            </div>
-          </Col>
-        </Row>
-
-        <Row>
-          {videos.map((video) => (
-            <Col md="4" sm="6" xs="12" className="mb-4 d-flex" key={video.id}>
-              <Card className="h-100 shadow-sm border-0">
-                <video width="100%" height="180" controls>
-                  <source src={video.videoUrl} type="video/mp4" />
-                </video>
-                <CardBody>
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <Badge color="success">{video.category}</Badge>
-                    <div className="d-flex align-items-center">
-                      <span className="me-1">{video.rating}</span>
-                      <Star size={16} color="orange" />
-                      <small className="text-muted ms-1">({video.reviews})</small>
-                    </div>
-                  </div>
-
-                  <CardTitle tag="h5" className="fw-bold">{video.title}</CardTitle>
-                  <CardText className="text-muted" style={{ fontSize: "0.9rem" }}>
-                    {video.description}
-                  </CardText>
-
-                  <div className="d-flex align-items-center mb-2">
-                    <Clock size={16} className="me-1" />
-                    <small className="text-muted">{video.duration}</small>
-                  </div>
-                  <Progress value={video.progress} color="primary" className="mb-3" />
-
-                  <div className="d-flex justify-content-between">
-                    <Button outline color="secondary" size="sm">
-                      Start Over
-                    </Button>
-                    <Button color="primary" size="sm">
-                      {video.progress > 0 ? "Continue" : "Start Now"}
-                    </Button>
-                  </div>
-                </CardBody>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </div>
-    </Container>
+        ))}
+      </Row>
+    </Fragment>
   );
 };
 

@@ -1,47 +1,104 @@
 // HeroBanner.js
-import React from 'react';
-import { Container, Button } from 'reactstrap';
-import bannerImage from '@src/assets/images/pages/coming-soon.svg'
+import React from "react";
+import { Container, Button } from "reactstrap";
+import bannerImage from "@src/assets/images/pages/coming-soon.svg";
 
 const HeroBanner = () => {
   return (
     <Container
       fluid
-      className="d-flex flex-column flex-lg-row align-items-center justify-content-between px-5 pb-5 pt-2 hero-content"
-      style={{ backgroundColor: '#f6f6ff', borderRadius: '10px' }}
+      className="d-flex flex-column flex-lg-row align-items-center justify-content-between px-5 py-5 hero-content"
+      style={{
+        background: "linear-gradient(135deg, #eef2ff, #f8faff)",
+        borderRadius: "20px",
+        boxShadow: "0px 8px 20px rgba(0,0,0,0.05)",
+      }}
     >
       {/* Left Side Text */}
-   <div className="text-start pt-5" style={{ maxWidth: '600px' }}>
-  <h1 className="display-4 fw-bold">Online Education</h1>
-  <h1 className="display-4 fw-bold text-primary">Learn on your Class Schedule</h1>
-  <p className="text-muted mt-3">
-    Access your lessons, track progress and complete assignments at your own pace.
-  </p>
- <p className="text-muted d-flex gap-3 flex-wrap">
-  <span>Quality Teachers</span>
-  <span>Get Certificate</span>
-  <span>Best Curriculum</span>
-</p>
+      <div className="text-start" style={{ maxWidth: "600px" }}>
+        <h1 className="display-4 fw-bold text-dark">
+          <span style={{ color: "#0d6efd" }}>Transform</span> Your Learning
+        </h1>
+        <h2 className="fw-semibold mt-2 text-primary">
+          Study Anytime, Anywhere 🚀
+        </h2>
 
-  <div className="mt-4">
-    <Button color="primary" className="me-2">
-      Ready to Get Started?
-    </Button>
-    <Button outline color="dark">
-      Watch Demo Video
-    </Button>
-  </div>
-  {/* <p className="text-muted mt-3">Trusted by 10,000+ Students Across India</p> */}
-</div>
+        <p className="bold mt-3 fs-5">
+          Access lessons, track progress, and achieve your academic goals with
+          expert educators and structured courses.
+        </p>
 
+        <div className="d-flex flex-wrap gap-4 mt-4">
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "12px",
+              padding: "12px 20px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+              textAlign: "center",
+              flex: "1 1 150px",
+            }}
+          >
+            <h5 className="mb-1 text-primary">⭐</h5>
+            <p className="mb-0 fw-semibold">Quality Teachers</p>
+          </div>
+
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "12px",
+              padding: "12px 20px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+              textAlign: "center",
+              flex: "1 1 150px",
+            }}
+          >
+            <h5 className="mb-1 text-success">🎓</h5>
+            <p className="mb-0 fw-semibold">Get Certificate</p>
+          </div>
+
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "12px",
+              padding: "12px 20px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+              textAlign: "center",
+              flex: "1 1 150px",
+            }}
+          >
+            <h5 className="mb-1 text-warning">📘</h5>
+            <p className="mb-0 fw-semibold">Best Curriculum</p>
+          </div>
+        </div>
+
+
+        <div className="mt-4 d-flex gap-3">
+          <Button color="primary" size="lg" className="shadow-sm rounded-pill">
+            Get Started
+          </Button>
+          <Button
+            outline
+            color="dark"
+            size="lg"
+            className="rounded-pill border-2"
+          >
+            ▶ Watch Demo
+          </Button>
+        </div>
+      </div>
 
       {/* Right Side Image */}
-      <div className="pt-4 pt-lg-0">
+      <div className="pt-4 pt-lg-0 text-center">
         <img
           src={bannerImage}
           alt="Student Learning Banner"
           className="img-fluid"
-          style={{ maxHeight: '400px' }}
+          style={{
+            maxHeight: "420px",
+            borderRadius: "15px",
+            boxShadow: "0px 6px 15px rgba(0,0,0,0.08)",
+          }}
         />
       </div>
     </Container>

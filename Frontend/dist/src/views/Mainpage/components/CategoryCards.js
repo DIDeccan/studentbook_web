@@ -47,30 +47,61 @@ const cardData = [
 
 const CategoryCards = () => {
   return (
-    <Container className="py-4">
-      <h2 className="mb-4 text-center">Categories</h2>
-      <Row>
+    <Container className="py-5">
+      <h2 className="mb-5 text-center fw-bold text-primary">
+        🌟 Explore Our Categories
+      </h2>
+      <Row className="justify-content-center">
         {cardData.map((card, index) => (
-          <Col sm="12" md="6" lg="3" className="mb-4" key={index}>
-            <Link to={`/${card.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <Card 
-                className="h-100 shadow-sm hover-shadow"   
+          <Col sm="12" md="6" lg="4" xl="3" className="mb-4 d-flex" key={index}>
+            <Link
+              to={`/${card.id}`}
+              style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}
+            >
+              <Card
+                className="h-100 shadow-lg border-0"
                 style={{
-                  maxWidth: '280px', 
-                  width: '100%' 
+                  borderRadius: '15px',
+                  overflow: 'hidden',
+                  transition: 'transform 0.3s, box-shadow 0.3s'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.1)';
                 }}
               >
-                <CardImg 
-                  top 
-                  width="100%" 
-                  src={card.img} 
-                  alt={card.title} 
-                  style={{ height: '180px', objectFit: 'cover' }} 
+                <CardImg
+                  top
+                  src={card.img}
+                  alt={card.title}
+                  style={{
+                    height: '200px',
+                    objectFit: 'cover',
+                    borderTopLeftRadius: '15px',
+                    borderTopRightRadius: '15px'
+                  }}
                 />
-                <CardBody>
-                  <CardTitle tag="h5">{card.title}</CardTitle>
-                  <Badge color={card.tagColor} className="mb-2">{card.tag}</Badge>
-                  <CardText>{card.desc}</CardText>
+                <CardBody className="d-flex flex-column">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <CardTitle tag="h5" className="fw-bold text-dark">
+                      {card.title}
+                    </CardTitle>
+                    <Badge color={card.tagColor} pill>
+                      {card.tag}
+                    </Badge>
+                  </div>
+                  <CardText className="text-muted mb-3">
+                    {card.desc}
+                  </CardText>
+                  <div className="mt-auto text-end">
+                    <span className="text-primary fw-semibold">
+                      ➜ Learn More
+                    </span>
+                  </div>
                 </CardBody>
               </Card>
             </Link>

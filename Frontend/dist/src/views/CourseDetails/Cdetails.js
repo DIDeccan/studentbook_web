@@ -14,7 +14,7 @@ import {
 const Cdetails = () => {
   const { id } = useParams();
   const location = useLocation();
-  const subject = location.state?.subject; 
+  const subject = location.state?.subject;
 
   if (!subject) {
     return <p className="text-center mt-5">No course data found.</p>;
@@ -85,29 +85,59 @@ const Cdetails = () => {
   };
 
   return (
-    <Container className="my-4">
+    <Container
+      fluid
+      className="py-4"
+      style={{
+        background: "linear-gradient(135deg, #ffecd2, #fcb69f, #a1c4fd, #c2e9fb)",
+        minHeight: "100vh"
+      }}
+    >
       <Row>
-        <Col md="8">
-          <video width="100%" height="400" controls key={currentVideo}>
-            <source src={currentVideo} type="video/mp4" />
-          </video>
-          <h2 className="mt-3">{subject.name}</h2>
-          <p className="text-muted">
-            {subject.category} - {subject.level}
-          </p>
-          <Badge color="danger" pill>
-            {subject.category}
-          </Badge>
+        {/* Left Side - Video & Description */}
+        <Col md="8" className="mb-4">
+          <div
+            className="p-3 rounded-4 shadow-lg"
+            style={{ backgroundColor: "rgba(255,255,255,0.9)" }}
+          >
+            <video
+              width="100%"
+              height="400"
+              controls
+              key={currentVideo}
+              style={{ borderRadius: "15px" }}
+            >
+              <source src={currentVideo} type="video/mp4" />
+            </video>
+            <h2 className="mt-3 text-primary fw-bold">🎓 {subject.name}</h2>
+            <p className="text-muted">
+              {subject.category} - {subject.level}
+            </p>
+            <Badge color="warning" pill>
+              {subject.category}
+            </Badge>
 
-          <h5 className="mt-4 text-primary">{currentChapter}</h5>
-          <p className="mt-2">{currentDesc}</p>
+            <h5 className="mt-4 text-success fw-bold">📖 {currentChapter}</h5>
+            <p className="mt-2 text-dark">{currentDesc}</p>
+          </div>
         </Col>
 
+        {/* Right Side - Course Content */}
         <Col md="4">
-          <div className="border rounded p-3 shadow-sm">
-            <h5>Course Content</h5>
-            <Progress value={subject.progress} className="mb-2" />
-            <small>{subject.progress}% completed</small>
+          <div
+            className="p-3 rounded-4 shadow-lg"
+            style={{ backgroundColor: "rgba(255,255,255,0.95)" }}
+          >
+            <h4 className="fw-bold text-primary">📚 Course Content</h4>
+            <Progress
+              value={subject.progress}
+              className="mb-2"
+              color="info"
+              style={{ height: "15px", borderRadius: "10px" }}
+            />
+            <small className="fw-bold text-success">
+              {subject.progress}% completed 🎯
+            </small>
 
             <ListGroup className="mt-3">
               {units.map((unit) => (
@@ -116,9 +146,15 @@ const Cdetails = () => {
                     id={`toggle${unit.id}`}
                     action
                     tag="button"
-                    className="text-start fw-bold"
+                    className="text-start fw-bold rounded-3"
+                    style={{
+                      background:
+                        "linear-gradient(45deg, #89f7fe, #66a6ff)",
+                      color: "#fff",
+                      border: "none"
+                    }}
                   >
-                    {unit.name}
+                    📦 {unit.name}
                   </ListGroupItem>
 
                   <UncontrolledCollapse toggler={`#toggle${unit.id}`}>
@@ -126,12 +162,17 @@ const Cdetails = () => {
                       {unit.chapters.map((chapter, idx) => (
                         <ListGroupItem
                           key={idx}
-                          className="ps-4"
+                          className="ps-4 rounded-2 my-1"
                           action
                           tag="button"
+                          style={{
+                            background: "#f0f9ff",
+                            color: "#0072ff",
+                            fontWeight: "500"
+                          }}
                           onClick={() => handleChapterClick(chapter)}
                         >
-                          {chapter}
+                          📖 {chapter}
                         </ListGroupItem>
                       ))}
                     </ListGroup>

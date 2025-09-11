@@ -85,6 +85,7 @@ const Login = () => {
   const [registerOpen, setRegisterOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
+
   const [forgotOpen, setForgotOpen] = useState(false);
   useEffect(() => {
     dispatch(fetchClasses());
@@ -163,6 +164,8 @@ const Login = () => {
             >
               Sign Up
             </Button>
+
+
             <Button color="primary" className="me-2" onClick={() => setLoginModalOpen(true)}>Log In</Button>
           </div>
         </div>
@@ -173,10 +176,6 @@ const Login = () => {
             setRegisterOpen(false);
             setPaymentOpen(true);
           }}
-          openLogin={() => {
-            setRegisterOpen(false);
-            setLoginModalOpen(true);
-          }}
           selectedClass={selectedClass}
         />
 
@@ -185,47 +184,62 @@ const Login = () => {
           toggle={() => setPaymentOpen(!paymentOpen)}
           classInfo={selectedClass}
         />
-
-
         <LoginBasic
           isOpen={loginModalOpen}
-          toggle={() => setLoginModalOpen(!loginModalOpen)}
+          toggle={toggleLoginModal}
           openRegister={() => {
             setLoginModalOpen(false)
-            setRegisterOpen(true)
-          }}
-          openForgotPassword={() => {
-            setLoginModalOpen(false)
-            setForgotOpen(true)
+            setModalOpen(true)
           }}
         />
-
-        <ForgotPassword
-          isOpen={forgotOpen}
-          toggle={() => setForgotOpen(!forgotOpen)}
-        />
-
 
       </div>
       <Container fluid className="d-flex flex-column flex-lg-row align-items-center justify-content-between px-5 pb-5 pt-2 hero-content">
-        <div className="text-start pt-5" style={{ maxWidth: '600px' }}>
-          <h1 className="display-4 fw-bold">Your Course</h1>
-          <h1 className="display-4 fw-bold text-primary">To Success</h1>
-          <p className="text-muted mt-3">
-            Learning made fun, interactive, and effective — specially designed for students from Classes 6 to 10.
+        <div className="text-start pt-5" style={{ maxWidth: '900px' }}>
+          <h1
+            className="fw-bold display-4 mb-3"
+            style={{
+              background: "linear-gradient(90deg, #7db2ddff, #e52e71)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent"
+            }}
+          >
+            Your Course To Success
+          </h1>
+          <p className="lead">
+            <strong>
+              Learning made fun, interactive, and effective — specially designed for students from Classes 6 to 10.
+            </strong>
           </p>
-          <p className="text-muted">
-            Explore subjects, quizzes, and live doubt-solving with top educators.
+
+          <p className="lead">
+            <strong>
+              Explore subjects, quizzes, and live doubt-solving with top educators.
+            </strong>
           </p>
+
+          <p className="lead">
+            <strong>
+              Track your progress with personalized dashboards, earn badges for achievements, and access offline videos anytime, anywhere.
+            </strong>
+          </p>
+
+          <p className="lead">
+            <strong>
+              Join a community of curious learners, participate in competitions, and strengthen your concepts with hands-on practice.
+            </strong>
+          </p>
+
+
           <div className="mt-4">
-            <Button color="primary" className="me-2">
-              Ready to Get Started?
+            <Button size="lg" color="primary" className="me-3 shadow">
+              🚀 Get Started
             </Button>
-            <Button outline color="dark">
-              Watch Demo Video
+            <Button size="lg" outline color="dark">
+              ▶ Watch Demo
             </Button>
           </div>
-          <p className="text-muted mt-3">Trusted by 10,000+ Students Across India</p>
+          <p className="mt-4 lead">🌟 Trusted by <b>10,000+ Students</b> Across India</p>
         </div>
 
         <div className="pt-4 pt-lg-0">
