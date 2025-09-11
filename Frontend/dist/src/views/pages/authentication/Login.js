@@ -203,18 +203,30 @@ const Login = () => {
           >
             Your Course To Success
           </h1>
-          <p className="text-muted lead">
-            Learning made <strong>fun</strong>, <strong>interactive</strong>, and <strong>effective</strong> — specially designed for students from <b>Classes 6 to 10</b>.
+          <p className="lead">
+            <strong>
+              Learning made fun, interactive, and effective — specially designed for students from Classes 6 to 10.
+            </strong>
           </p>
-          <p className="text-muted lead">
-            Explore subjects, quizzes, and live doubt-solving with top educators.
+
+          <p className="lead">
+            <strong>
+              Explore subjects, quizzes, and live doubt-solving with top educators.
+            </strong>
           </p>
-          <p className="text-muted lead">
-            Track your progress with personalized dashboards, earn badges for achievements, and access offline videos anytime, anywhere.
+
+          <p className="lead">
+            <strong>
+              Track your progress with personalized dashboards, earn badges for achievements, and access offline videos anytime, anywhere.
+            </strong>
           </p>
-          <p className="text-muted lead">
-            Join a community of curious learners, participate in competitions, and strengthen your concepts with hands-on practice.
+
+          <p className="lead">
+            <strong>
+              Join a community of curious learners, participate in competitions, and strengthen your concepts with hands-on practice.
+            </strong>
           </p>
+
 
           <div className="mt-4">
             <Button size="lg" color="primary" className="me-3 shadow">
@@ -224,7 +236,7 @@ const Login = () => {
               ▶ Watch Demo
             </Button>
           </div>
-          <p className="text-muted mt-4">🌟 Trusted by <b>10,000+ Students</b> Across India</p>
+          <p className="mt-4 lead">🌟 Trusted by <b>10,000+ Students</b> Across India</p>
         </div>
 
         <div className="pt-4 pt-lg-0">

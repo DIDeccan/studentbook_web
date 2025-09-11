@@ -36,7 +36,7 @@ const SwiperBook = ({ isRtl }) => {
       <CardHeader className="d-flex justify-content-center border-0 p-0 mb-5">
         <CardTitle
           tag='h2'
-          className="fw-bold text-primary text-center"
+          className="fw-bold text-primary text-center mb-1"
            style={{
               background: "linear-gradient(90deg, #7db2ddff, #e52e71)",
               WebkitBackgroundClip: "text",
