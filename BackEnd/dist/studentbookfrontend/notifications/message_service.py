@@ -75,7 +75,7 @@ def send_otp_phone_number(user,subject_type, phone_number_field="phone_number"):
                 message=f"OTP sent to {phone_number}",
                 message_type="success",
                 status_code=status.HTTP_200_OK,
-                data = {"otp": otp}
+                # data = {"otp": otp}
             )
 
     except Exception as e:
