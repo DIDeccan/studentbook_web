@@ -309,7 +309,8 @@ class Subchapter(models.Model):
     subject = ChainedForeignKey(Subject, chained_field="course",chained_model_field="course" ,on_delete=models.CASCADE, related_name="subchapter")
     # semester = ChainedForeignKey(Semester,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='subchapter')
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE, related_name='subchapter')
-    chapter = ChainedForeignKey(Chapter, chained_field="subject",chained_model_field="subject" ,on_delete=models.CASCADE, related_name='subchapter')
+    # chapter = ChainedForeignKey(Chapter, chained_field="subject",chained_model_field="subject" ,on_delete=models.CASCADE, related_name='subchapter')
+    chapter = models.ForeignKey(Chapter, on_delete=models.SET_NULL, null=True, blank=True)
     video_name = models.CharField(max_length=255)
     video_url = models.URLField()   # final S3/CloudFront URL
     vedio_duration = models.CharField(max_length=50, blank=True, null=True)  # e.g. "15:30"
@@ -343,6 +344,7 @@ class GeneralContent(models.Model):
     Stores content title, description, optional file attachment, and links to its related entities.
     """
     title = models.CharField(max_length=255)
+    sub_title = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     image = models.FileField(upload_to='general_content_files/', blank=True, null=True)
 

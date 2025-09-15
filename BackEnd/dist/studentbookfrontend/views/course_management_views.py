@@ -38,18 +38,30 @@ class MainContentView(APIView):
         for content in general_contents:
             content_data = {
                 'name': content.title,
-                'image': (content.image.url) if content.image else None
+                'image': (content.image.url) if content.image else None,
+                'description': content.description if content.description else None,
+                'sub_title': content.sub_title if content.sub_title else None,
+                 
             }
             if content.title == "My Subjects":
+                # content_data['class_id'] = student_class.id
+                content_data['sub_title'] = student_class.name
+                
                 data.insert(0, content_data)  # Insert at the beginning
+                # data.append
             else:
                 data.append(content_data)
-        # return Response(data, status=status.HTTP_200_OK)
+        # data['class'] = student_class.name
+        responce = {
+            'class': student_class.name,
+            'content': data
+        }
+        
         return api_response(
                 message="Content data fetched successfully",
                 message_type="success",
                 status_code=status.HTTP_200_OK,
-                data = data
+                data = responce
             )
 
 
