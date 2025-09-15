@@ -7,6 +7,8 @@ from rest_framework import generics
 from studentbookfrontend.models import *
 from studentbookfrontend.serializers.course_management_serilizers import *
 from studentbookfrontend.helper.api_response import api_response
+from django.db.models import Sum, F, ExpressionWrapper, DurationField
+from django.db.models.functions import Cast
 
 #Main Content View
 
@@ -65,6 +67,169 @@ class MainContentView(APIView):
             )
 
 
+# class SubjectList(APIView):
+#     # permission_classes = [permissions.IsAuthenticated]
+#     def get(self, request,student_id,class_id):
+#         student_class = get_object_or_404(Class, id=class_id)
+#         if not student_class:
+#             return api_response(
+#                 message="Class not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#                         )
+#         try:
+#             student = Student.objects.get(id=student_id, student_class=class_id)
+#         except Student.DoesNotExist:
+#             student = None
+#         if not student:
+#             return api_response(
+#                 message="Student not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#                         )
+#         try:
+#             subjects = Subject.objects.filter(course_id=class_id).order_by('id')
+#             # serializer = SubjectSerializer(subjects, many=True)
+#             # return api_response(
+#             #     message="Subjects fetched successfully",
+#             #     message_type="success",
+#             #     status_code=status.HTTP_200_OK,
+#             #     data = serializer.data
+#             # )
+
+#             data = []
+#             for subject in subjects:
+
+#                 total_hours = (
+#                         VideoTrackingLog.objects.filter(
+#                             student=student,
+#                             subchapter__chapter__subject=subject
+#                         ).aggregate(total=Sum("watched_duration"))["total"]
+#                         or timedelta(0)
+#                     )
+#                 total_seconds = int(total_hours.total_seconds()) if total_hours else 0
+
+
+#                 watched_time = (
+#                         VideoTrackingLog.objects.filter(
+#                             student=student,
+#                             subchapter__chapter__subject=subject
+#                         ).aggregate(total=Sum("watched_duration"))["total"]
+#                         or timedelta(0)
+#                     )
+#                 # total_video_time = (
+#                 #             Subchapter.objects.filter(
+#                 #                 subject=subject
+#                 #             ).aggregate(total=Sum("vedio_duration"))["total"]
+#                 #             or timedelta(0)
+#                 #         )
+#                 # total video time (all subchapters)
+#                 total_video_time = Subchapter.objects.aggregate(
+#                     total=Sum("vedio_duration")
+#                 )["total"] or timedelta(0)
+
+#                 completion_percentage = (watched_time.total_seconds() / total_video_time.total_seconds() * 100) if total_video_time.total_seconds() > 0 else 0
+                                
+#                 if total_video_time.total_seconds() > 0:
+#                     percentage = (watched_time.total_seconds() / total_video_time.total_seconds()) * 100
+#                 else:
+#                     percentage = 0
+
+#                 data.append({
+#                     "id": subject.id,
+#                     "name": subject.name,   # if your model field is subject_name
+#                     "class_id": student_class.id,
+#                     "class_name": student_class.name,
+#                     "icon": request.build_absolute_uri(subject.icon.url) if subject.icon else None,
+#                     "total_hours": str(timedelta(seconds=total_seconds)),
+#                     "progress_percentage": round(completion_percentage, 2)
+#                 })
+#             return api_response(
+#                 message="Subjects fetched successfully",
+#                 message_type="success",
+#                 status_code=status.HTTP_200_OK,
+#                 data = data
+#             )
+#         except Class.DoesNotExist:
+#             return api_response(
+#                 message="Class not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#             )
+
+# class SubjectList(APIView):
+#     # permission_classes = [permissions.IsAuthenticated]
+#     def get(self, request, student_id, class_id):
+#         student_class = get_object_or_404(Class, id=class_id)
+#         if not student_class:
+#             return api_response(
+#                 message="Class not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#             )
+
+#         try:
+#             student = Student.objects.get(id=student_id, student_class=class_id)
+#         except Student.DoesNotExist:
+#             return api_response(
+#                 message="Student not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#             )
+
+#         try:
+#             subjects = Subject.objects.filter(course_id=class_id).order_by("id")
+#             data = []
+
+#             for subject in subjects:
+#                 # ✅ Total watched time for this subject
+#                 watched_time = (
+#                     VideoTrackingLog.objects.filter(
+#                         student=student,
+#                         subchapter__chapter__subject=subject
+#                     ).aggregate(total=Sum("watched_duration"))["total"]
+#                     or timedelta(0)
+#                 )
+#                 subchapters = Subchapter.objects.filter(subject=subject).values_list("vedio_duration", flat=True)
+
+#                 total_video_time = sum(
+#                     (parse_duration(d) for d in subchapters if d), 
+#                     timedelta(0)
+#                 )
+
+#                 watched_seconds = watched_time.total_seconds() if watched_time else 0
+#                 total_seconds = total_video_time.total_seconds() if total_video_time else 0
+
+#                 # ✅ Completion percentage
+#                 completion_percentage = (
+#                     (watched_seconds / total_seconds) * 100 if total_seconds > 0 else 0
+#                 )
+
+#                 data.append({
+#                     "id": subject.id,
+#                     "name": subject.name,
+#                     "class_id": student_class.id,
+#                     "class_name": student_class.name,
+#                     "icon": request.build_absolute_uri(subject.icon.url) if subject.icon else None,
+#                     "total_hours": str(timedelta(seconds=int(watched_seconds))),
+#                     "progress_percentage": round(completion_percentage, 2),
+#                 })
+
+#             return api_response(
+#                 message="Subjects fetched successfully",
+#                 message_type="success",
+#                 status_code=status.HTTP_200_OK,
+#                 data=data,
+#             )
+#         except Class.DoesNotExist:
+#             return api_response(
+#                 message="Class not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#             )
+ 
+
+
 class SubjectList(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request,student_id,class_id):
@@ -78,29 +243,72 @@ class SubjectList(APIView):
         try:
             student = Student.objects.get(id=student_id, student_class=class_id)
         except Student.DoesNotExist:
-            student = None
-        if not student:
             return api_response(
                 message="Student not found",
                 message_type="error",
                 status_code=status.HTTP_404_NOT_FOUND
-                        )
-        try:
-            subjects = Subject.objects.filter(course_id=class_id)
-            serializer = SubjectSerializer(subjects, many=True)
-            return api_response(
-                message="Subjects fetched successfully",
-                message_type="success",
-                status_code=status.HTTP_200_OK,
-                data = serializer.data
             )
-        except Class.DoesNotExist:
-            return api_response(
-                message="Class not found",
-                message_type="error",
-                status_code=status.HTTP_404_NOT_FOUND
+
+        # 1️⃣ Fetch all subjects for the class in one query
+        subjects = Subject.objects.filter(course_id=class_id).order_by("id")
+
+        # 2️⃣ Aggregate watched duration for all subjects in one query
+        watched_durations = (
+            VideoTrackingLog.objects.filter(student=student)
+            .values("subchapter__chapter__subject_id")
+            .annotate(total_watched=Sum("watched_duration"))
+        )
+        watched_map = {
+            wd["subchapter__chapter__subject_id"]: wd["total_watched"]
+            for wd in watched_durations
+        }
+
+        # 3️⃣ Aggregate total video durations for all subchapters in one query
+        subchapter_durations = (
+            Subchapter.objects.filter(subject__in=subjects)
+            .values("subject_id")
+            .annotate(
+                total_duration=Sum(
+                    ExpressionWrapper(
+                        Cast("vedio_duration", DurationField()), DurationField()
+                    )
+                )
             )
-    
+        )
+        total_map = {
+            sd["subject_id"]: sd["total_duration"] for sd in subchapter_durations
+        }
+
+        # 4️⃣ Build final response (no extra queries inside loop)
+        data = []
+        for subject in subjects:
+            watched_time = watched_map.get(subject.id, timedelta(0)) or timedelta(0)
+            total_time = total_map.get(subject.id, timedelta(0)) or timedelta(0)
+
+            watched_seconds = watched_time.total_seconds()
+            total_seconds = total_time.total_seconds()
+
+            completion_percentage = (
+                (watched_seconds / total_seconds) * 100 if total_seconds > 0 else 0
+            )
+
+            data.append({
+                "id": subject.id,
+                "name": subject.name,
+                "class_id": student_class.id,
+                "class_name": student_class.name,
+                "icon": request.build_absolute_uri(subject.icon.url) if subject.icon else None,
+                # "total_hours": str(timedelta(seconds=int(watched_seconds))),
+                "progress_percentage": round(completion_percentage, 2),
+            })
+
+        return api_response(
+            message="Subjects fetched successfully",
+            message_type="success",
+            status_code=status.HTTP_200_OK,
+            data=data,
+        )
+
 
 class ClassWIthSubjectsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
