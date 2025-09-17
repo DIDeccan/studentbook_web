@@ -39,10 +39,12 @@ class MainContentView(APIView):
 
         for content in general_contents:
             content_data = {
+                'id': content.id,
                 'name': content.title,
-                'image': (content.image.url) if content.image else None,
+                'image': (content.icon.url) if content.icon else None,
                 'description': content.description if content.description else None,
                 'sub_title': content.sub_title if content.sub_title else None,
+                'tagColor': tagColors.get(content.title, "primary"),
                  
             }
             if content.title == "My Subjects":
@@ -234,12 +236,6 @@ class SubjectList(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request,student_id,class_id):
         student_class = get_object_or_404(Class, id=class_id)
-        if not student_class:
-            return api_response(
-                message="Class not found",
-                message_type="error",
-                status_code=status.HTTP_404_NOT_FOUND
-                        )
         try:
             student = Student.objects.get(id=student_id, student_class=class_id)
         except Student.DoesNotExist:
@@ -279,7 +275,41 @@ class SubjectList(APIView):
             sd["subject_id"]: sd["total_duration"] for sd in subchapter_durations
         }
 
-        # 4️⃣ Build final response (no extra queries inside loop)
+        # 4️⃣ Static extras (can also be added in Subject model)
+        extras = {
+            "Mathematics": {
+                "content": "Algebra, Geometry, Calculus and more",
+                "icon": "calculator",
+                "color": "#FF6B6B"
+            },
+            "English": {
+                "content": "Grammar, Literature, Writing skills",
+                "icon": "book",
+                "color": "#4ECDC4"
+            },
+            "Telugu": {
+                "content": "Language, Poetry, Literature",
+                "icon": "language",
+                "color": "#FFD166"
+            },
+            "General Science": {
+                "content": "Physics, Chemistry, Biology",
+                "icon": "flask",
+                "color": "#06D6A0"
+            },
+            "Social Studies": {
+                "content": "Ancient, Medieval, Modern history",
+                "icon": "hourglass",
+                "color": "#118AB2"
+            },
+            "Hindi": {
+                "content": "Grammar, Literature, Writing",
+                "icon": "pen",
+                "color": "#073B4C"
+            },
+        }
+
+        # 5️⃣ Final response
         data = []
         for subject in subjects:
             watched_time = watched_map.get(subject.id, timedelta(0)) or timedelta(0)
@@ -292,14 +322,21 @@ class SubjectList(APIView):
                 (watched_seconds / total_seconds) * 100 if total_seconds > 0 else 0
             )
 
+            subject_extra = extras.get(subject.name, {
+                "content": "",
+                "icon": "book",
+                "color": "#000000"
+            })
+
             data.append({
                 "id": subject.id,
                 "name": subject.name,
-                "class_id": student_class.id,
-                "class_name": student_class.name,
-                "icon": request.build_absolute_uri(subject.icon.url) if subject.icon else None,
-                # "total_hours": str(timedelta(seconds=int(watched_seconds))),
-                "progress_percentage": round(completion_percentage, 2),
+                "content": subject.content,
+                "image": request.build_absolute_uri(subject.image.url) if subject.image else None,
+                "class": student_class.id,
+                "icon": subject.icon,
+                "progressPercentage": round(completion_percentage, 2),
+                "color": subject_extra["color"],
             })
 
         return api_response(
