@@ -4,6 +4,8 @@ from django.utils import timezone
 from datetime import timedelta
 from smart_selects.db_fields import ChainedForeignKey
 import datetime
+from storages.backends.s3boto3 import S3Boto3Storage
+
 # from moviepy.editor import VideoFileClip
 # Create your models here.
 
@@ -346,7 +348,7 @@ class GeneralContent(models.Model):
     title = models.CharField(max_length=255)
     sub_title = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    image = models.FileField(upload_to='general_content_files/', blank=True, null=True)
+    image = models.FileField(upload_to='general_content_files/', blank=True, null=True, storage=S3Boto3Storage())
 
 
     def __str__(self):
