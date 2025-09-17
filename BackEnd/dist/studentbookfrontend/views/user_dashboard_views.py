@@ -84,6 +84,57 @@ class DashboardAPIView(APIView):
             data=response
         )
 
+# class TopicInterestChartAPIView(APIView):
+#     def get(self, request, student_id, class_id):
+#         # Aggregate watched duration per subject
+
+#         try:
+#             user = Student.objects.get(id=student_id)
+#             class_obj = Class.objects.get(id=class_id)
+#         except (Student.DoesNotExist, Class.DoesNotExist):
+#             return api_response(
+#                 message="User or Class not found",
+#                 message_type="error",
+#                 status_code=404
+#             )
+        
+#         subject_durations = (
+#             VideoTrackingLog.objects
+#             .filter(student=user)
+#             .values("subchapter__subject__name")
+#             .annotate(
+#                 total_duration=Sum(
+#                     ExpressionWrapper(F("watched_duration"), output_field=DurationField())
+#                 )
+#             )
+#         )
+
+#         # Total duration across all subjects
+#         total_seconds = sum(
+#             sd["total_duration"].total_seconds() for sd in subject_durations if sd["total_duration"]
+#         )
+
+#         subjects = []
+#         for sd in subject_durations:
+#             if not sd["total_duration"]:
+#                 continue
+#             subject_name = sd["subchapter__subject__name"]
+#             duration_seconds = sd["total_duration"].total_seconds()
+#             percentage = (duration_seconds / total_seconds * 100) if total_seconds > 0 else 0
+
+#             subjects.append({
+#                 "name": subject_name,
+#                 "percentage": round(percentage, 2)
+#             })
+
+#         # return Response({"subjects": subjects})
+#         return api_response(
+#             message="Topic interest data fetched successfully",
+#             message_type="success",
+#             status_code=200,
+#             data={"subjects": subjects}
+#         )
+
 class TopicInterestChartAPIView(APIView):
     def get(self, request, student_id, class_id):
         # Aggregate watched duration per subject
@@ -97,11 +148,15 @@ class TopicInterestChartAPIView(APIView):
                 message_type="error",
                 status_code=404
             )
-        
+
+        # Fetch all subjects in this class
+        all_subjects = Subject.objects.filter(course=class_obj)  # adjust field name if different
+
+        # Aggregate watched duration per subject
         subject_durations = (
             VideoTrackingLog.objects
             .filter(student=user)
-            .values("subchapter__subject__name")
+            .values("subchapter__subject__id")
             .annotate(
                 total_duration=Sum(
                     ExpressionWrapper(F("watched_duration"), output_field=DurationField())
@@ -109,32 +164,32 @@ class TopicInterestChartAPIView(APIView):
             )
         )
 
-        # Total duration across all subjects
-        total_seconds = sum(
-            sd["total_duration"].total_seconds() for sd in subject_durations if sd["total_duration"]
-        )
+        # Map subject_id -> duration (in seconds)
+        duration_map = {
+            sd["subchapter__subject__id"]: sd["total_duration"].total_seconds()
+            for sd in subject_durations if sd["total_duration"]
+        }
+
+        # Total across all subjects
+        total_seconds = sum(duration_map.values())
 
         subjects = []
-        for sd in subject_durations:
-            if not sd["total_duration"]:
-                continue
-            subject_name = sd["subchapter__subject__name"]
-            duration_seconds = sd["total_duration"].total_seconds()
+        for subj in all_subjects:
+            duration_seconds = duration_map.get(subj.id, 0)
             percentage = (duration_seconds / total_seconds * 100) if total_seconds > 0 else 0
-
             subjects.append({
-                "name": subject_name,
+                "name": subj.name,
                 "percentage": round(percentage, 2)
             })
 
-        # return Response({"subjects": subjects})
         return api_response(
             message="Topic interest data fetched successfully",
             message_type="success",
             status_code=200,
             data={"subjects": subjects}
         )
-    
+
+  
 class WeeklyLearningTrendsAPI(APIView):
     def get(self, request, student_id, class_id):
 
