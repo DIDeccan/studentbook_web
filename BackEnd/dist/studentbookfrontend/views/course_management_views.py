@@ -33,7 +33,14 @@ class MainContentView(APIView):
                 message_type="error",
                 status_code=status.HTTP_404_NOT_FOUND
                         )
-      
+        tagColors = {
+            "My Subjects": "primary",
+            "Yoga Tips": "success",
+            "Current Affairs": "warning",
+            "Healthy Living": "danger",
+            "Music": "info",
+            "Sports": "secondary",
+            }
         data = []
         general_contents = GeneralContent.objects.all()
 
