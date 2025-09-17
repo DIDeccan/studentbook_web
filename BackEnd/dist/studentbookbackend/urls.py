@@ -22,7 +22,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path('', include('studentbookfrontend.urls.user_urls')),
     path('', include('studentbookfrontend.urls.razorpay_urls')),
-    path('course_management/', include('studentbookfrontend.urls.course_management_urls')),
+    path('', include('studentbookfrontend.urls.course_management_urls')),
     path('dashboard/', include('studentbookfrontend.urls.user_dashboard_urls')),
     path("chaining/", include("smart_selects.urls"))
 ]
