@@ -73,7 +73,8 @@ const Login = () => {
     handleSubmit,
     formState: { errors }
   } = useForm({ defaultValues })
-  const { data: classes } = useSelector((state) => state.classes);
+  // const { data: classes } = useSelector((state) => state.classes);
+  const { data: classData } = useSelector((state) => state.classes);
   const source = skin === 'dark' ? illustrationsDark : illustrationsLight
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -90,6 +91,29 @@ const Login = () => {
   useEffect(() => {
     dispatch(fetchClasses());
   }, [dispatch]);
+
+//   useEffect(() => {
+//   if (classData.length > 0) {
+//     localStorage.setItem("classData", JSON.stringify(classData));
+//   }
+// }, [classData]);
+
+ // Sync selectedClass with user class after signup/login
+  useEffect(() => {
+    const storedAuth = localStorage.getItem("authData")
+    const authData = storedAuth ? JSON.parse(storedAuth) : null
+
+    if (authData?.user?.class_id && classData.length > 0) {
+      const matchedClass = classData.find(
+        (c) => String(c.id) === String(authData.user.class_id)
+      )
+      if (matchedClass) {
+        setSelectedClass(matchedClass)
+        console.log("✅ Preselected class after OTP or login:", matchedClass)
+      }
+    }
+  }, [classData])
+
   return (
     <div>
       <div className="hero-wrapper" style={{ height: '75px' }}>
@@ -142,17 +166,20 @@ const Login = () => {
           </Link>
 
           <div>
-
-            <Button
-              outline
-              color="primary"
-              className="me-2"
-              onClick={() => {
-                const storedAuth = localStorage.getItem("authData");
-                const token = storedAuth ? JSON.parse(storedAuth)?.accessToken : null;
-
-                if (classes && classes.length > 0) {
+{/* 
+          <Button
+  outline
+  color="primary"
+  className="me-2"
+  onClick={() => {
+    const storedAuth = localStorage.getItem("authData");
+    const token = storedAuth ? JSON.parse(storedAuth)?.accessToken : null;
+ console.log("🔹 Stored Auth:", storedAuth);
+    console.log("🔹 Access Token:", token);
+    if (classes && classes.length > 0) {
+     console.log("🔹 Available classes:", classes);
                   setSelectedClass(classes[0]);
+                  console.log("✅ Selected Class set to:", classes[0]);
                 }
 
                 if (token) {
@@ -161,9 +188,48 @@ const Login = () => {
                   setRegisterOpen(true);
                 }
               }}
-            >
-              Sign Up
-            </Button>
+>
+  Sign Up
+</Button> */}
+
+<Button
+  outline
+  color="primary"
+  className="me-2"
+  onClick={() => {
+     console.log("🔹 Sign Up button clicked")
+
+    const storedAuth = localStorage.getItem("authData")
+    const authData = storedAuth ? JSON.parse(storedAuth) : null
+    const token = authData?.accessToken
+
+    // Ensure selectedClass is synced with user's class
+    const storedClasses = classData.length ? classData : JSON.parse(localStorage.getItem("classData")) || []
+    let preselectedClass = null
+
+    if (authData?.user?.class_id && storedClasses.length > 0) {
+      preselectedClass = storedClasses.find(
+        (c) => String(c.id) === String(authData.user.class_id)
+      )
+
+      if (preselectedClass) {
+        console.log("✅ Preselected class:", preselectedClass)
+        setSelectedClass(preselectedClass)
+      }
+    }
+
+    if (token) {
+      console.log("🔹 User logged in, opening PaymentModal")
+      setPaymentOpen(true)
+    } else {
+      console.log("🔹 User not logged in, opening Register modal")
+      setRegisterOpen(true)
+    }
+  
+  }}
+>
+  Sign Up
+</Button>
 
 
             <Button color="primary" className="me-2" onClick={() => setLoginModalOpen(true)}>Log In</Button>
@@ -177,6 +243,8 @@ const Login = () => {
             setPaymentOpen(true);
           }}
           selectedClass={selectedClass}
+           setSelectedClass={setSelectedClass}
+          preselectClass={true}
         />
 
         <PaymentModal

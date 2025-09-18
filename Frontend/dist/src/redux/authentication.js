@@ -10,8 +10,25 @@ const saveAuthData = ({ accessToken, refreshToken, user }) => {
   return authData;
 };
 
+const clearAuthData = () => {
+  localStorage.removeItem("authData");
+  localStorage.removeItem("studentProfileData");
+};
 
 // --- Thunks ---
+
+export const fetchClasses = createAsyncThunk(
+  "auth/fetchClasses",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get(API_ENDPOINTS.CLASSES);
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to fetch classes");
+    }
+  }
+);
+
 
 export const signupUser = createAsyncThunk(
   "auth/signupUser",
@@ -22,7 +39,7 @@ export const signupUser = createAsyncThunk(
         first_name: userData.firstName,
         last_name: userData.lastName,
         phone_number: userData.phone,
-        student_class: userData.classLevel,
+        class_id: userData.classLevel,
         user_type: "student",
         password: userData.password,
         confirm_password: userData.confirmPassword,
@@ -30,7 +47,7 @@ export const signupUser = createAsyncThunk(
       const response = await api.post(
         API_ENDPOINTS.AUTH.REGISTER,
         payload,
-        { headers: { "Content-Type": "application/json" } }
+        // { headers: { "Content-Type": "application/json" } }
       );
 
       return { message: response.data.message, registrationData: payload };
@@ -43,9 +60,9 @@ export const signupUser = createAsyncThunk(
 
 export const verifyOtp = createAsyncThunk("auth/verifyOtp", async (otpData, { rejectWithValue }) => {
   try {
-    const response = await api.post(API_ENDPOINTS.AUTH.VERIFY_OTP, otpData, {
-      headers: { "Content-Type": "application/json" },
-    });
+    const response = await api.post(API_ENDPOINTS.AUTH.VERIFY_OTP, otpData); 
+      // headers: { "Content-Type": "application/json" },
+    // });
     return response.data;
   } catch (err) {
     return rejectWithValue(err.response?.data || err.message);
@@ -54,9 +71,9 @@ export const verifyOtp = createAsyncThunk("auth/verifyOtp", async (otpData, { re
 
 export const resendOtp = createAsyncThunk("auth/resendOtp", async (phone_number, { rejectWithValue }) => {
   try {
-    const response = await api.post(API_ENDPOINTS.AUTH.RESEND_OTP, { phone_number }, {
-      headers: { "Content-Type": "application/json" },
-    });
+    const response = await api.post(API_ENDPOINTS.AUTH.RESEND_OTP, { phone_number }); 
+      // headers: { "Content-Type": "application/json" },
+    // });
     return response.data;
   } catch (err) {
     return rejectWithValue(err.response?.data || err.message);
@@ -66,18 +83,19 @@ export const resendOtp = createAsyncThunk("auth/resendOtp", async (phone_number,
 export const createOrder = createAsyncThunk("auth/createOrder", async (_, { getState, rejectWithValue }) => {
   try {
     const { auth } = getState();
-    const { accessToken, userData, registrationData } = auth;
+    // const { accessToken, userData, registrationData } = auth;
 
-    if (!accessToken) return rejectWithValue("User not authenticated.");
+    // if (!accessToken) return rejectWithValue("User not authenticated.");
+     const { userData, registrationData } = auth;
     if (!registrationData && !userData) return rejectWithValue("Registration data missing.");
 
-    const studentClass = registrationData?.student_class || userData?.student_class;
+    const studentClass = registrationData?.class_id || userData?.class_id;
     if (!studentClass) return rejectWithValue("Student class missing.");
 
     const res = await api.post(
       API_ENDPOINTS.PAYMENT.CREATE_ORDER,
-      { student_class: studentClass, price: 1000 },
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+      { class_id: studentClass, price: 1000 },
+      // { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     return res.data.data;
@@ -95,19 +113,20 @@ export const loginUser = createAsyncThunk(
 
       const res = await api.post(API_ENDPOINTS.AUTH.LOGIN, { phone_number, password });
 
-      const { access, refresh, user_type, student_id, is_paid, course_id, student_package_id } = res.data;
+      const { access, refresh, user_type, student_id, is_paid, class_id, student_package_id } = res.data;
       const user = {
         user_type,
         is_paid: !!is_paid,
         student_id: student_id ?? null,
-        course_id: course_id ?? null,
-        student_package_id: student_package_id ?? null,
+        class_id: class_id ?? null,
+        // student_package_id: student_package_id ?? null,
       };
       const authData = saveAuthData({
         accessToken: access,
         refreshToken: refresh,
         user,
       });
+     
       return authData;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Login failed" });
@@ -143,39 +162,42 @@ export const forgotPassword = createAsyncThunk(
 );
 
 
+
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { getState, rejectWithValue }) => {
     try {
       const { accessToken, refreshToken } = getState().auth;
 
-      if (accessToken && refreshToken) {
-        const response = await api.post(
-          API_ENDPOINTS.AUTH.LOGOUT,
-          { refresh: refreshToken },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-
-        localStorage.removeItem("authData");
-        return response.data;
+      if (!accessToken || !refreshToken) {
+          clearAuthData();
+        return rejectWithValue("No active session");
       }
 
-      localStorage.removeItem("authData");
-      return { message: "No active session" };
+      const response = await api.post(
+        API_ENDPOINTS.AUTH.LOGOUT,
+        { refresh: refreshToken },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+  clearAuthData();
+      if (response.data?.message_type === "error") {
+        return rejectWithValue(response.data.message);
+      }
+
+      return response.data;
     } catch (error) {
-      localStorage.removeItem("authData");
+      clearAuthData();
       return rejectWithValue(error.response?.data?.message || "Logout failed");
     }
   }
 );
 
 
-// --- Slice ---
 const initialState = {
   loading: false,
   error: null,
@@ -189,41 +211,87 @@ const initialState = {
   accessToken: safeParseLocalStorage("authData")?.accessToken || null,
   refreshToken: safeParseLocalStorage("authData")?.refreshToken || null,
   userData: safeParseLocalStorage("authData")?.user || null,
+  classes: [],
+classesLoading: false,
+classesError: null,
+
 }
+
+// Helper to reset auth state
+const resetAuthState = () => ({
+  ...initialState,
+  accessToken: null,
+  refreshToken: null,
+  userData: null,
+  registrationData: null,
+  otpVerified: false,
+  orderData: null,
+});
 const authSlice = createSlice({
   name: "auth",
   initialState,
-  reducers: {
+   reducers: {
     logout: (state) => {
-      // state.registrationData = null;
-      // state.accessToken = null;
-      // state.refreshToken = null;
-      // state.otpVerified = false;
-      // state.orderData = null;
-      // state.userData = null;
-      // Object.assign(state, initialState, { accessToken: null, refreshToken: null, userData: null });
-      Object.assign(state, initialState, {
-        accessToken: null,
-        refreshToken: null,
-        userData: null,
-        registrationData: null,
-        otpVerified: false,
-        orderData: null,
-      });
-      localStorage.removeItem("authData");
+      Object.assign(state, resetAuthState());
+      // localStorage.removeItem("authData");
+      clearAuthData();
     },
+    // updateUserData: (state, action) => {
+    //   const updatedUser = action.payload;
+    //   state.userData = { ...state.userData, ...updatedUser };
+    //   const existingAuthData = JSON.parse(localStorage.getItem("authData")) || {};
+    //   localStorage.setItem(
+    //     "authData",
+    //     JSON.stringify({ ...existingAuthData, user: { ...(existingAuthData.user || {}), ...updatedUser } })
+    //   );
+    // },
     updateUserData: (state, action) => {
-      const updatedUser = action.payload;
-      state.userData = { ...state.userData, ...updatedUser };
-      const existingAuthData = JSON.parse(localStorage.getItem("authData")) || {};
-      localStorage.setItem(
-        "authData",
-        JSON.stringify({ ...existingAuthData, user: { ...(existingAuthData.user || {}), ...updatedUser } })
-      );
+  // if (!state.userData) return; // do nothing if user is logged out
+
+  const updatedUser = action.payload;
+  state.userData = { ...state.userData, ...updatedUser };
+
+  // const authData = {
+  //   accessToken: state.accessToken,
+  //   refreshToken: state.refreshToken,
+  //   user: state.userData,
+  // };
+
+  // localStorage.setItem("authData", JSON.stringify(authData));
+  saveAuthData({
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        user: state.userData,
+      });
+},
+updateTokens: (state, action) => {
+  const { accessToken, refreshToken } = action.payload;
+  state.accessToken = accessToken;
+  if (refreshToken) state.refreshToken = refreshToken;
+
+  saveAuthData({
+    accessToken,
+    refreshToken: refreshToken || state.refreshToken,
+    user: state.userData,
+  });
+
     },
   },
   extraReducers: (builder) => {
     builder
+    .addCase(fetchClasses.pending, (state) => {
+  state.classesLoading = true;
+  state.classesError = null;
+})
+.addCase(fetchClasses.fulfilled, (state, action) => {
+  state.classesLoading = false;
+  state.classes = action.payload;
+})
+.addCase(fetchClasses.rejected, (state, action) => {
+  state.classesLoading = false;
+  state.classesError = action.payload;
+})
+
       // Signup
       .addCase(signupUser.pending, (state) => { state.loading = true; state.error = null; state.success = null })
       .addCase(signupUser.fulfilled, (state, action) => {
@@ -247,7 +315,7 @@ const authSlice = createSlice({
         if (tokens.access && tokens.refresh) {
           const baseUser = {
             user_type: state.registrationData?.user_type || "student",
-            student_class: state.registrationData?.student_class || null,
+            class_id: state.registrationData?.class_id || null,
             first_name: state.registrationData?.first_name || null,
             last_name: state.registrationData?.last_name || null,
             is_paid: false,
@@ -309,35 +377,25 @@ const authSlice = createSlice({
 
 
       // Logout
-      .addCase(logoutUser.pending, (state) => { state.loading = true; state.error = null })
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(logoutUser.fulfilled, (state) => {
-
-        Object.assign(state, initialState, {
-          accessToken: null,
-          refreshToken: null,
-          userData: null,
-          registrationData: null,
-          otpVerified: false,
-          orderData: null,
-        });
-        localStorage.removeItem("authData");
-        toast.success("Logout successful");
+        console.log("Clearing auth state and localStorage");
+        Object.assign(state, resetAuthState());
+        // localStorage.removeItem("authData");
+        clearAuthData();
+        // toast.success("Logout successful");
       })
       .addCase(logoutUser.rejected, (state, action) => {
-
-        Object.assign(state, initialState, {
-          accessToken: null,
-          refreshToken: null,
-          userData: null,
-          registrationData: null,
-          otpVerified: false,
-          orderData: null,
-        });
-        localStorage.removeItem("authData");
+        Object.assign(state, resetAuthState());
+        // localStorage.removeItem("authData");
+         clearAuthData();
         toast.error(action.payload || "Logout failed");
       });
   },
 });
 
-export const { logout, updateUserData } = authSlice.actions;
+export const { logout, updateUserData, updateTokens } = authSlice.actions;
 export default authSlice.reducer;

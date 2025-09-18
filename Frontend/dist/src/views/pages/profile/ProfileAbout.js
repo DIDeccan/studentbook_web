@@ -18,8 +18,14 @@ const ProfileAbout = () => {
   );
 
   const studentId = authData?.student_id;
-  const classId = authData?.student_class || profileData?.student_class;
-
+  // const classId = authData?.student_class || profileData?.student_class;
+const classId =
+  authData?.class_id || // from auth
+  authData?.student_class || // fallback from auth
+  profileData?.class_id || // from profile
+  (profileData?.student_packages?.length > 0
+    ? profileData.student_packages[0]?.class_id // first package class
+    : null);
   const [editMode, setEditMode] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");

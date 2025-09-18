@@ -6,16 +6,26 @@ import { safeParseLocalStorage } from "../utils/storage";
 
 const resolveIds = (studentId, classId, state) => {
   const profile = state.studentProfile?.data;
-  
-  const resolved = {
-    studentId: studentId || profile?.student_id,
-    classId: classId || profile?.course_id,
+console.log(profile);
 
+  const resolved = {
+    studentId: studentId || profile?.student_id || profile?.id,
+    classId:
+      classId ||
+      profile?.class_id || 
+      (profile?.student_packages?.length > 0
+        ? profile.student_packages[0]?.class_id 
+        : null),
   };
+console.log(resolved);
+
   console.log("resolveIds:", { studentId, classId, resolved });
   return resolved;
 };
-
+const saveProfile = (data) => {
+  localStorage.setItem("studentProfileData", JSON.stringify(data));
+  return data;
+};
 
 // ------------------- Thunks -------------------
 
@@ -24,13 +34,14 @@ export const fetchStudentProfile = createAsyncThunk(
   "studentProfile/fetch",
   async ({ studentId, classId }, { getState, rejectWithValue }) => {
     try {
-      const token =
-        getState().auth?.accessToken || localStorage.getItem("accessToken");
+      // const token =
+      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
+     const token = getState().auth?.accessToken;
       if (!token) return rejectWithValue("No auth token found");
 
       const { studentId: sid, classId: cid } = resolveIds(studentId, classId, getState());
       if (!sid || !cid)
-        return rejectWithValue("Missing studentId or classId (course_id)");
+        return rejectWithValue("Missing studentId or classId (student_class)");
 
       const res = await api.get(API_ENDPOINTS.STUDENTS.PROFILE(sid, cid), {
         headers: { Authorization: `Bearer ${token}` },
@@ -48,13 +59,14 @@ export const updateStudentProfile = createAsyncThunk(
   "studentProfile/update",
   async ({ studentId, classId, payload }, { getState, rejectWithValue }) => {
     try {
-      const token =
-        getState().auth?.accessToken || localStorage.getItem("accessToken");
+      // const token =
+      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
+     const token = getState().auth?.accessToken;
       if (!token) return rejectWithValue("No auth token found");
 
       const { studentId: sid, classId: cid } = resolveIds(studentId, classId, getState());
       if (!sid || !cid)
-        return rejectWithValue("Missing studentId or classId (course_id)");
+        return rejectWithValue("Missing studentId or classId (student_class)");
 
       const res = await api.put(API_ENDPOINTS.STUDENTS.PROFILE(sid, cid), payload, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -73,13 +85,14 @@ export const uploadStudentProfileImage = createAsyncThunk(
   "studentProfile/uploadImage",
   async ({ studentId, classId, file }, { getState, rejectWithValue }) => {
     try {
-      const token =
-        getState().auth?.accessToken || localStorage.getItem("accessToken");
+      // const token =
+      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
+      const token = getState().auth?.accessToken;
       if (!token) return rejectWithValue("No auth token found");
 
       const { studentId: sid, classId: cid } = resolveIds(studentId, classId, getState());
       if (!sid || !cid)
-        return rejectWithValue("Missing studentId or classId (course_id)");
+        return rejectWithValue("Missing studentId or classId (student_class)");
 
       const formData = new FormData();
       formData.append("profile_image", file);
@@ -102,8 +115,9 @@ export const removeStudentProfileImage = createAsyncThunk(
   "studentProfile/removeImage",
   async ({ studentId, classId }, { getState, rejectWithValue }) => {
     try {
-      const token =
-        getState().auth?.accessToken || localStorage.getItem("accessToken");
+      // const token =
+      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
+      const token = getState().auth?.accessToken;
       if (!token) return rejectWithValue("No auth token found");
 
       const { studentId: sid, classId: cid } = resolveIds(studentId, classId, getState());
@@ -130,8 +144,9 @@ export const sendPhoneOtp = createAsyncThunk(
   "studentProfile/sendPhoneOtp",
   async ({ studentId, classId, newPhone }, { getState, rejectWithValue }) => {
     try {
-      const token =
-        getState().auth?.accessToken || localStorage.getItem("accessToken");
+      // const token =
+      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
+       const token = getState().auth?.accessToken;
       if (!token) return rejectWithValue("No auth token found");
 
       const res = await api.put(
@@ -219,7 +234,8 @@ const profileSlice = createSlice({
       .addCase(fetchStudentProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload.data;
-        localStorage.setItem("studentProfileData", JSON.stringify(state.data));
+        // localStorage.setItem("studentProfileData", JSON.stringify(state.data));
+      saveProfile(state.data);
       })
       .addCase(fetchStudentProfile.rejected, (state, action) => {
         state.loading = false;
@@ -234,7 +250,8 @@ const profileSlice = createSlice({
       .addCase(updateStudentProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload?.data || action.payload;
-        localStorage.setItem("studentProfileData", JSON.stringify(state.data));
+        // localStorage.setItem("studentProfileData", JSON.stringify(state.data));
+      saveProfile(state.data);
       })
       .addCase(updateStudentProfile.rejected, (state, action) => {
         state.loading = false;
@@ -262,7 +279,8 @@ const profileSlice = createSlice({
           }
         }
 
-        localStorage.setItem("studentProfileData", JSON.stringify(state.data));
+        // localStorage.setItem("studentProfileData", JSON.stringify(state.data));
+      saveProfile(state.data);
       })
 
       .addCase(uploadStudentProfileImage.rejected, (state, action) => {

@@ -1,0 +1,72 @@
+
+@import '../bootstrap-extended/include'; // Bootstrap includes
+@import '../components/include'; // Components includes
+
+
+.hero-content {
+  background: linear-gradient(135deg, #eef2ff, #f8faff);
+  border-radius: 20px;
+  box-shadow: 0px 8px 20px rgba(0,0,0,0.05);
+
+  .hero-text {
+    max-width: 600px;
+
+    .highlight {
+      color: #0d6efd;
+    }
+
+    .sub-heading {
+      color: $primary;
+    }
+
+    .description {
+      color: $body-color;
+    }
+  }
+
+  .feature-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    flex: 1 1 150px;
+  }
+
+  .hero-image img {
+    max-height: 420px;
+    border-radius: 15px;
+    box-shadow: 0px 6px 15px rgba(0,0,0,0.08);
+  }
+}
+
+// Dark Theme
+.dark-layout {
+  .hero-content {
+    background: linear-gradient(135deg, #1e1e2d, #2a2a3c);
+    box-shadow: 0px 8px 20px rgba(0,0,0,0.4);
+
+    .hero-text {
+      .highlight {
+        color: lighten($primary, 15%);
+      }
+
+      .sub-heading {
+        color: lighten($primary, 20%);
+      }
+
+      .description {
+        color: $theme-dark-body-color;
+      }
+    }
+
+    .feature-box {
+      background: $theme-dark-card-bg;
+      color: $theme-dark-body-color;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    .hero-image img {
+      box-shadow: 0px 6px 15px rgba(0,0,0,0.4);
+    }
+  }
+}

@@ -15,7 +15,7 @@ import { getUserData, getHomeRouteForLoggedInUser } from '../utility/Utils'
 
 // ** GetRoutes
 import { getRoutes } from './routes'
-
+import PublicRoute from '../@core/components/routes/PublicRoute'
 
 // ** Components
 const Error = lazy(() => import('../views/pages/misc/Error'))
@@ -29,6 +29,8 @@ const Router = () => {
   const allRoutes = getRoutes(layout)
 
     const user = getUserData()
+    console.log(user);
+    
   const getHomeRoute = () => {
   
     if (user) {
@@ -44,11 +46,27 @@ const Router = () => {
       index: true,
       element: <Navigate replace to={getHomeRoute()} />
     },
+    // {
+    //   path: '/login',
+    //   element: <BlankLayout />,
+    //   meta: { restricted: true }, 
+    //   children: [{ path: '/login', element: <Login /> }]
+    // },
+    {
+  path: '/login',
+  element: <BlankLayout />,
+  children: [
     {
       path: '/login',
-      element: <BlankLayout />,
-      children: [{ path: '/login', element: <Login /> }]
-    },
+      element: (
+        <PublicRoute route={{ meta: { restricted: true } }}>
+          <Login />
+        </PublicRoute>
+      )
+    }
+  ]
+},
+
     // {
     //   path: '/auth/not-auth',
     //   element: <BlankLayout />,

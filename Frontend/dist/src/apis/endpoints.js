@@ -1,5 +1,5 @@
 // Base API URL from .env
-export const BASE_URL = 'http://127.0.0.1:8000';
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const API_ENDPOINTS = {
   CLASSES: `${BASE_URL}/class-list`,
@@ -25,7 +25,15 @@ const API_ENDPOINTS = {
   PAYMENT: {
     CREATE_ORDER: `${BASE_URL}/payment-create-order`,
     VERIFY: `${BASE_URL}/verify-payment`
-  }
+  },
+    COURSE_MANAGEMENT: {
+    MAIN_CONTENT: (studentId, classId) =>
+      `${BASE_URL}/maincontent/${studentId}/${classId}`,
+    SUBJECT_LIST: (studentId, classId) =>
+      `${BASE_URL}/class_subject_list/${studentId}/${classId}`,
+    CLASSES_WITH_SUBJECTS: (studentId, classId) =>
+      `${BASE_URL}/classes_with_subjects/${studentId}/${classId}`,
+  },
 };
 
 export default API_ENDPOINTS;

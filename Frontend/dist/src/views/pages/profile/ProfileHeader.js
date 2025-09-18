@@ -12,13 +12,20 @@ const ProfileHeader = () => {
   const uploading = useSelector((state) => state.profile?.uploading);
   const authData = useSelector((state) => state.auth?.userData || state.auth?.authData?.user);
 
-  const studentId = authData?.student_id;
-  const classId =
-    authData?.course_id ||
-    authData?.student_class ||
-    (profileData?.student_packages && profileData.student_packages.length > 0
-      ? profileData.student_packages[0].course_id
-      : null);
+  // const studentId = authData?.student_id;
+  // const classId =
+  //   authData?.course_id ||
+  //   authData?.student_class ||
+  //   (profileData?.student_packages && profileData.student_packages.length > 0
+  //     ? profileData.student_packages[0].course_id
+  //     : null);
+const studentId = authData?.student_id || profileData?.student_id || profileData?.id;
+const classId =
+  authData?.student_class ||
+  profileData?.class_id ||
+  (profileData?.student_packages?.length > 0
+    ? profileData.student_packages[0]?.class_id
+    : null);
 
 
   const [previewFile, setPreviewFile] = useState(null);

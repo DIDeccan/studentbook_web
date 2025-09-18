@@ -1,8 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getHomeRouteForLoggedInUser } from "@utils";
 import { AbilityContext } from '@src/utility/context/Can'
 import {
   Row,
@@ -16,16 +14,13 @@ import {
   Input,
   Button,
   FormFeedback,
-  Alert,
   Spinner,
 } from "reactstrap";
 import { Facebook, Twitter, Mail, GitHub } from "react-feather";
 import "@styles/react/pages/page-authentication.scss";
 import InputPasswordToggle from '@components/input-password-toggle'
-import { signupUser, verifyOtp, resendOtp } from "../../../redux/authentication";
-import api from "@src/apis/api";
-import API_ENDPOINTS from "@src/apis/endpoints";
-import { toast } from "react-toastify";
+import { fetchClasses, signupUser, verifyOtp, resendOtp } from "../../../redux/authentication";
+import toast from 'react-hot-toast';
 
 const defaultValues = {
   firstName: "",
@@ -38,20 +33,20 @@ const defaultValues = {
   accepted: false,
 };
 
-const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => {
+const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass, preselectClass = false }) => {
   const ability = useContext(AbilityContext)
   const dispatch = useDispatch();
-  const { registrationData, accessToken, orderData } = useSelector((state) => state.auth);
+  const { registrationData, classes, classLoading, classError } = useSelector((state) => state.auth);
   const { loading, error, success, otpVerified } = useSelector((state) => state.auth);
-  const [classes, setClasses] = useState([]);
-  const [classLoading, setClassLoading] = useState(true);
+  // const [classes, setClasses] = useState([]);
+  // const [classLoading, setClassLoading] = useState(true);
   const [localLoading, setLocalLoading] = useState(false);
-  const [classError, setClassError] = useState(null);
+  // const [classError, setClassError] = useState(null);
   const [otpMode, setOtpMode] = useState(false);
   const [otp, setOtp] = useState("");
-  const [registeredEmail, setRegisteredEmail] = useState("");
+  // const [registeredEmail, setRegisteredEmail] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
-  const { handleSubmit, control, formState: { errors, isSubmitSuccessful }, watch, setError, clearErrors, reset } = useForm({ defaultValues });
+  const { handleSubmit, control, formState: { errors }, watch, setError, clearErrors, reset } = useForm({ defaultValues });
 
   const password = watch("password");
   const confirmPassword = watch("confirmPassword");
@@ -67,29 +62,37 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
   }, [confirmPassword, password, setError, clearErrors]);
 
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const res = await api.get(API_ENDPOINTS.CLASSES);
-        setClasses(res.data.data || []);
-      } catch (err) {
-        console.error("Error fetching classes:", err);
-        setClassError("Failed to load classes");
-      } finally {
-        setClassLoading(false);
-      }
-    };
-    fetchClasses();
-  }, []);
-
-  useEffect(() => {
-    if (selectedClass) {
-      reset({
-        classLevel: selectedClass.id,
-      });
+  // useEffect(() => {
+  //   const fetchClasses = async () => {
+  //     try {
+  //       const res = await api.get(API_ENDPOINTS.CLASSES);
+  //       setClasses(res.data.data || []);
+  //     } catch (err) {
+  //       console.error("Error fetching classes:", err);
+  //       setClassError("Failed to load classes");
+  //     } finally {
+  //       setClassLoading(false);
+  //     }
+  //   };
+  //   fetchClasses();
+  // }, []);
+    useEffect(() => {
+    if (!classes?.length) {
+      dispatch(fetchClasses());
     }
-  }, [selectedClass, reset]);
+  }, [dispatch, classes.length]);
 
+   useEffect(() => {
+    if (isOpen) {
+      reset({
+        ...defaultValues,
+        classLevel: selectedClass && preselectClass ? String(selectedClass.id) : "",
+      });
+      setOtpMode(false);
+      setOtp("");
+      // setRegisteredEmail("");
+    }
+  }, [isOpen, selectedClass, preselectClass, reset]);
 
 
   const onSubmit = async (data) => {
@@ -99,7 +102,6 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
       lastName: data.lastName,
       phone: data.phone,
       classLevel: data.classLevel,
-      address: data.address,
       password: data.password,
       confirmPassword: data.confirmPassword,
     };
@@ -108,15 +110,22 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
     try {
       const res = await dispatch(signupUser(payload)).unwrap();
       setOtpMode(true);
-      setRegisteredEmail(data.email);
+      // setRegisteredEmail(data.phone);
       toast.success(res.message || "OTP sent to your Phone. Enter it below.");
     } catch (err) {
       toast.error(err.message || "Registration failed");
-    } finally {
-      setLocalLoading(false);
+    // Check for backend error message
+    if (err?.message_type === "error" && err?.message) {
+      toast.error(err.message); // show backend message in toast
+    } else if (err?.message) {
+      toast.error(err.message);
+    } else {
+      toast.error("Registration failed. Please try again.");
     }
-  };
-
+  } finally {
+    setLocalLoading(false);
+  }
+};
 
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
@@ -139,7 +148,7 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
       toast.success("OTP Verified Successfully");
 
       toggle();
-      openPayment();
+    openPayment();
 
     } catch (err) {
       console.error("OTP verification failed:", err);
@@ -230,7 +239,7 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
                 <p>✨ Study offline without internet worries</p>
               </div>
             </div>
-          </Co
+          </Col>
 
           {/* Right Section */}
           <Col
@@ -322,10 +331,9 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
                     <Controller
                       name="classLevel"
                       control={control}
-                      defaultValue=""
                       rules={{ required: "Please select your class" }}
                       render={({ field }) => (
-                        <Input type="select" {...field} invalid={!!errors.classLevel}>
+                        <Input type="select" {...field} invalid={!!errors.classLevel} disabled={classLoading}>
                           <option value="">Select Class</option>
                           {classLoading && (
                             <option disabled>Loading classes...</option>
@@ -438,9 +446,11 @@ const Register = ({ isOpen, toggle, openPayment, openLogin, selectedClass }) => 
                 // OTP Step
                 <>
                   <h4 className="mb-1">Verify Your Account</h4>
-                  <p className="text-muted mb-3">
-                    Enter the OTP sent to {registeredEmail}
-                  </p>
+              <p className="text-muted mb-3">
+  Enter the OTP sent to {registrationData?.phone_number || "your phone number"}
+</p>
+
+
                   <FormGroup>
                     <Label>OTP</Label>
                     <Input

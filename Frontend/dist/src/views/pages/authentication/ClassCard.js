@@ -21,7 +21,6 @@ const Classcard = () => {
   const [selectedClass, setSelectedClass] = useState(null);
 
   useEffect(() => {
-
     if (!userData) {
       const storedProfile = localStorage.getItem("studentProfileData");
       if (storedProfile) {
@@ -30,9 +29,8 @@ const Classcard = () => {
     }
   }, [dispatch, userData]);
 
-  const registeredClassId = userData?.student_class ? String(userData.student_class) : null;
+  const registeredClassId = userData?.class_id ? String(userData.class_id) : null;
   const isPaid = userData?.is_paid || false;
-
 
   useEffect(() => {
     dispatch(fetchClasses());
@@ -40,42 +38,35 @@ const Classcard = () => {
 
   const handleSubscribe = (cls) => {
     setSelectedClass(cls);
-
     if (accessToken) {
       setIsPaymentOpen(true);
     } else {
       setIsRegisterOpen(true);
     }
-
   };
 
   const handlePaymentSuccess = () => {
     const updatedProfile = {
       ...userData,
       is_paid: true,
-      student_class: selectedClass?.id,
+      class_id: selectedClass?.id,
     };
-
     dispatch(updateUserData(updatedProfile));
     localStorage.setItem("studentProfileData", JSON.stringify(updatedProfile));
-
     setIsPaymentOpen(false);
   };
 
   return (
-
-    <div style={{ padding: "2rem" }}>
-
+    <div style={{ padding: "2rem", position: "relative" }}>
       <h4
         style={{
-
-              background: "linear-gradient(90deg, #7db2ddff, #e52e71)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontSize: '3rem', 
-              letterSpacing: '2px',
-              textAlign: "center"
-            }}
+          background: "linear-gradient(90deg, #7db2ddff, #e52e71)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          fontSize: "2rem",
+          letterSpacing: "1px",
+          textAlign: "center",
+        }}
       >
         Student Access
       </h4>
@@ -89,85 +80,36 @@ const Classcard = () => {
           Error loading classes: {error}
         </div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${columns}, 1fr)`,
-            gap: "1.5rem",
-            padding: "1rem",
+        <Swiper
+          modules={[Navigation]}
+          navigation={{
+            nextEl: ".swiper-button-next-custom",
+            prevEl: ".swiper-button-prev-custom",
           }}
+          spaceBetween={20}
+          slidesPerView={"auto"}
         >
           {classData.map((cls) => {
-            const classId = String(cls.id);
-            const isUserClass = registeredClassId === classId;
-            const isLoggedIn = !!accessToken;
-
-            let buttonContent;
-
-            if (isUserClass && isPaid) {
-              buttonContent = (
-                <Button color="success" block disabled>
-                  Subscribed
-                </Button>
-              );
-
-            } else if (isUserClass && !isPaid) {
-              if (isLoggedIn) {
-                buttonContent = (
-                  <Button
-                    block
-                    color=""
-                    style={{ backgroundColor: "#a435f0", color: "white" }}
-                    onClick={() => handleSubscribe(cls)}
-                  >
-                    Subscribe
-                  </Button>
-                );
-              } else {
-                buttonContent = (
-                  <Button color="secondary" block disabled>
-                    Done Subscription
-                  </Button>
-                );
-              }
-
-            } else if (registeredClassId && !isUserClass && !isPaid && isLoggedIn) {
-              buttonContent = (
-                <Button color="secondary" block disabled>
-                  Not Available
-                </Button>
-              );
-
-            } else {
-              buttonContent = (
-                <Button
-                  block
-                  color=""
-                  style={{ backgroundColor: "#a435f0", color: "white" }}
-                  onClick={() => handleSubscribe(cls)}
-                >
-                  Subscribe
-                </Button>
-              );
-            }
+            const isDifferentClass = registeredClassId && !isUserClass && !isPaid && isLoggedIn;
 
             return (
-
+            <SwiperSlide key={cls.id} style={{ width: "400px" }}>
               <Card
-                key={cls.id}
                 style={{
-                  width: "100%",
-                  borderRadius: "20px",
-                  boxShadow: "0 15px 35px rgba(0,0,0,0.1)",
+                  width: "400px",
+                  borderRadius: "15px",
+                  boxShadow: "0 6px 15px rgba(0,0,0,0.1)",
                   overflow: "hidden",
-                  transition: "transform 0.3s, box-shadow 0.3s",
                 }}
-                className="class-card"
               >
                 {cls.vedio_url ? (
                   <video
                     controls
-                    style={{ width: "100%", height: "220px", borderRadius: "20px 20px 0 0", objectFit: "cover" }}
+                    style={{
+                      width: "100%",
+                      height: "220px",
+                      objectFit: "cover",
+                    }}
                   >
                     <source src={cls.vedio_url} type="video/mp4" />
                     Your browser does not support the video tag.
@@ -175,6 +117,7 @@ const Classcard = () => {
                 ) : (
                   <div
                     style={{
+                      width: "100%",
                       height: "220px",
                       background: "linear-gradient(135deg, #a8edea, #fed6e3)",
                       display: "flex",
@@ -183,74 +126,91 @@ const Classcard = () => {
                       color: "#fff",
                       fontWeight: "600",
                       fontSize: "1.2rem",
+                      textAlign: "center",
                     }}
                   >
                     No Demo Video
                   </div>
                 )}
 
-                <CardBody style={{ padding: "1.5rem" }}>
+                <CardBody style={{ padding: "1rem" }}>
                   <CardTitle
                     tag="h5"
-                    style={{ fontWeight: "700", fontSize: "1.3rem", marginBottom: "0.5rem" }}
+                    style={{
+                      fontWeight: "700",
+                      fontSize: "1.2rem",
+                      marginBottom: "0.5rem",
+                      textAlign: "center",
+                    }}
                   >
                     {cls.name}
                   </CardTitle>
-                  <CardText style={{ color: "#555", marginBottom: "1rem" }}>
+                  <CardText
+                    style={{
+                      color: "#555",
+                      fontSize: "0.95rem",
+                      marginBottom: "0.8rem",
+                      textAlign: "center",
+                    }}
+                  >
                     {cls.discription || "Explore engaging lessons with demo content."}
                   </CardText>
                   <CardText
                     className="fw-bold"
-                    style={{ color: "#1e7e34", fontSize: "1.1rem", marginBottom: "1rem" }}
+                    style={{
+                      color: "#1e7e34",
+                      fontSize: "1.1rem",
+                      marginBottom: "1rem",
+                      textAlign: "center",
+                    }}
                   >
                     ₹{cls.cost}
                   </CardText>
-
-                  {isDifferentClass ? (
-                    <Button
-                      color="secondary"
-                      block
-                      disabled
-                      style={{
-                        borderRadius: "50px",
-                        padding: "0.6rem 0",
-                        fontWeight: "600",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      Not Available
-                    </Button>
-                  ) : (
-                    <Button
-                      color="primary"
-                      block
-                      onClick={() => handleSubscribe(cls)}
-                      style={{
-                        borderRadius: "50px",
-                        padding: "0.6rem 0",
-                        fontWeight: "600",
-                        letterSpacing: "0.5px",
-                        background: "linear-gradient(90deg, #4facfe, #00f2fe)",
-                        border: "none",
-                        transition: "transform 0.2s",
-                      }}
-                      onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
-                      onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
-                    >
-                      Subscribe
-                    </Button>
-                  )}
+  {isDifferentClass ? (
+                      <Button
+                        color="secondary"
+                        block
+                        disabled
+                        style={{
+                          borderRadius: "50px",
+                          padding: "0.6rem 0",
+                          fontWeight: "600",
+                          letterSpacing: "0.5px",
+                        }}
+                      >
+                        Not Available
+                      </Button>
+                    ) : (
+                      <Button
+                        color="primary"
+                        block
+                        onClick={() => handleSubscribe(cls)}
+                          style={{
+                      borderRadius: "30px",
+                      fontSize: "0.9rem",
+                      padding: "0.6rem 0",
+                      background: "linear-gradient(90deg, #4facfe, #00f2fe)",
+                      border: "none",
+                    }}
+                        onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
+                        onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
+                      >
+                        Subscribe
+                      </Button>
+                    )}
                 </CardBody>
               </Card>
+            </SwiperSlide>
             );
-          })}
+})}
         </Swiper>
       )}
 
-      <div className="swiper-button-prev-custom" style={arrowStyle("75px")}>
+      {/* Custom Navigation Arrows */}
+      <div className="swiper-button-prev-custom" style={arrowStyle("60px")}>
         <ChevronLeft size={20} color="#333" />
       </div>
-      <div className="swiper-button-next-custom" style={arrowStyle(undefined, "100px")}>
+      <div className="swiper-button-next-custom" style={arrowStyle(undefined, "60px")}>
         <ChevronRight size={20} color="#333" />
       </div>
 
@@ -280,11 +240,11 @@ const arrowStyle = (left, right) => ({
   left,
   right,
   transform: "translateY(-50%)",
-  width: "40px",
-  height: "40px",
+  width: "35px",
+  height: "35px",
   borderRadius: "50%",
   background: "#fff",
-  boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -293,3 +253,4 @@ const arrowStyle = (left, right) => ({
 });
 
 export default Classcard;
+ 

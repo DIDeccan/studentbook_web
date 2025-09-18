@@ -21,7 +21,15 @@ const Profile = () => {
 
   const authData = useSelector((state) => state.auth?.userData || state.auth?.authData?.user);
   const studentId = authData?.student_id;
-  const classId = authData?.course_id || authData?.student_class || profile?.student_packages?.[0]?.course_id;
+  // const classId = authData?.course_id || authData?.student_class || profile?.student_packages?.[0]?.course_id;
+const classId =
+  authData?.student_class ||
+  profile?.class_id ||
+  (profile?.student_packages?.length > 0
+    ? profile.student_packages[0]?.class_id
+    : null);
+
+
 
   useEffect(() => {
   }, [authData, studentId, classId]);

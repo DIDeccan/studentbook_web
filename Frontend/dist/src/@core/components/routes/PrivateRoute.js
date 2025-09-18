@@ -18,7 +18,14 @@ const PrivateRoute = ({ children, route }) => {
   const restrictedRoute = route?.meta?.restricted || false
 
 
+  // if (!user) {
+  //   return <Navigate to='/login' />
+  // }
   if (!user) {
+    return <Navigate to='/login' />
+  }
+
+  if (user.is_paid === false) {
     return <Navigate to='/login' />
   }
 

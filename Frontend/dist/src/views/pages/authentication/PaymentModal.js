@@ -7,7 +7,7 @@ import API_ENDPOINTS from "@src/apis/endpoints";
 import { AbilityContext } from '@src/utility/context/Can';
 import { useNavigate } from "react-router-dom";
 import { getHomeRouteForLoggedInUser } from "@utils";
-import { toast } from "react-toastify";
+import toast from 'react-hot-toast';
 
 const PaymentModal = ({ isOpen, toggle, classInfo, onSuccess }) => {
   const ability = useContext(AbilityContext)
@@ -26,13 +26,13 @@ const PaymentModal = ({ isOpen, toggle, classInfo, onSuccess }) => {
         console.warn("No token found, not creating order yet");
         return;
       }
-
       dispatch(createOrder());
     }
   }, [isOpen, accessToken, dispatch]);
+  
   const openRazorpay = (orderData) => {
     if (!orderData) return;
-
+console.log("Selected class:", classInfo);
     const token =
       accessToken ||
       (JSON.parse(localStorage.getItem("authData"))?.accessToken ?? null);
@@ -78,8 +78,8 @@ const PaymentModal = ({ isOpen, toggle, classInfo, onSuccess }) => {
               is_paid: true,
               student_id: verifyData.student_id,
               student_package_id: verifyData.student_package_id,
-              student_class: verifyData.course_id,
-              course_id: verifyData.course_id,
+              // student_class: verifyData.course_id,
+              class_id: verifyData.class_id,
             })
           );
 
