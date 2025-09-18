@@ -458,7 +458,13 @@ class StudentRegisterAPIView(APIView):
                 )
         else:
 
-            class_name = json_data['class_id']
+            class_name = json_data.get('class_id',None)
+            if class_name is None:
+                return api_response(
+                                message="Class ID not found",
+                                message_type="error",
+                                status_code=status.HTTP_400_BAD_REQUEST
+                            )
             try:
                 class_obj = Class.objects.get(id=class_name)
             except Class.DoesNotExist:
