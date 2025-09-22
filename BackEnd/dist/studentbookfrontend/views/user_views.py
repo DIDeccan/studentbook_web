@@ -605,8 +605,9 @@ class ClassListDemoVideosApi(APIView):
                 "id": class_data.id,
                 "name": class_data.name,
                 "cost": class_data.amount,
-                'discription' : class_data.description,
-                'vedio_url': "hgsvhxgsdvh"
+                # 'discription' : class_data.description,
+                'description': "the transition from primary to middle school education. Students are introduced to a wider range of subjects, including advanced concepts in Mathematics, Science, Social Studies, and Languages. The focus is on building strong foundations, encouraging curiosity, and developing problem-solving skills. It is also the stage where students start learning through practical examples, projects, and activities to connect concepts with real life",
+                'vedio_url': None
             })
 
         return api_response(
