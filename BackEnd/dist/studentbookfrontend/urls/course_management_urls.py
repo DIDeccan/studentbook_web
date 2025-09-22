@@ -6,5 +6,6 @@ urlpatterns = [
     path("maincontent/<int:student_id>/<int:class_id>", MainContentView.as_view()),
     path("class_subject_list/<int:student_id>/<int:class_id>", SubjectList.as_view()),
     path("classes_with_subjects/<int:student_id>/<int:class_id>", ClassWIthSubjectsView.as_view()),
+    path("subject_videos/<int:student_id>/<int:class_id>/<int:subject_id>",SubjectVediosView.as_view())
     
 ]
