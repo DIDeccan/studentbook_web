@@ -42,7 +42,7 @@ class MainContentView(APIView):
             "Sports": "secondary",
             }
         data = []
-        general_contents = GeneralContent.objects.all()
+        general_contents = MainContent.objects.all()
 
         for content in general_contents:
             content_data = {
