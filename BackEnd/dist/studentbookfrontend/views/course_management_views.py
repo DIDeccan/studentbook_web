@@ -9,8 +9,73 @@ from studentbookfrontend.serializers.course_management_serilizers import *
 from studentbookfrontend.helper.api_response import api_response
 from django.db.models import Sum, F, ExpressionWrapper, DurationField
 from django.db.models.functions import Cast
-
+from datetime import timedelta
+from studentbookfrontend.helper.api_response import parse_duration
 #Main Content View
+
+# class MainContentView(APIView):
+#     # permission_classes = [permissions.IsAuthenticated]
+#     def get(self,request,student_id,class_id):
+
+#         student_class = get_object_or_404(Class, id=class_id)
+#         if not student_class:
+#             return api_response(
+#                 message="Class not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#                         )
+#         try:
+#             student = Student.objects.get(id=student_id, student_class=class_id)
+#         except Student.DoesNotExist:
+#             student = None
+#         if not student:
+#             return api_response(
+#                 message="Student not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#                         )
+#         tagColors = {
+#             "My Subjects": "primary",
+#             "Yoga Tips": "success",
+#             "Current Affairs": "warning",
+#             "Healthy Living": "danger",
+#             "Music": "info",
+#             "Sports": "secondary",
+#             }
+#         data = []
+#         general_contents = MainContent.objects.all()
+
+#         for content in general_contents:
+#             content_data = {
+#                 'id': content.id,
+#                 'name': content.title,
+#                 'image': (content.icon.url) if content.icon else None,
+#                 'description': content.description if content.description else None,
+#                 'sub_title': content.sub_title if content.sub_title else None,
+#                 'tagColor': tagColors.get(content.title, "primary"),
+                 
+#             }
+#             if content.title == "My Subjects":
+#                 # content_data['class_id'] = student_class.id
+#                 content_data['sub_title'] = student_class.name
+                
+#                 data.insert(0, content_data)  # Insert at the beginning
+#                 # data.append
+#             else:
+#                 data.append(content_data)
+#         # data['class'] = student_class.name
+#         responce = {
+#             'class': student_class.name,
+#             'content': data
+#         }
+        
+#         return api_response(
+#                 message="Content data fetched successfully",
+#                 message_type="success",
+#                 status_code=status.HTTP_200_OK,
+#                 data = responce
+#             )
+
 
 class MainContentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -42,6 +107,20 @@ class MainContentView(APIView):
             "Sports": "secondary",
             }
         data = []
+        content_data = {
+                'id': 0,
+                'name': 'My Subjects',
+                'image': 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D%27',
+                'description': "My Subjects lists all the courses or subjects you are enrolled in, helping you easily access study materials, track progress, and stay organized for each class.",
+                'sub_title': student_class.name,
+                'tagColor':"primary",
+                 
+            }
+        
+        data.append(content_data)
+
+
+
         general_contents = MainContent.objects.all()
 
         for content in general_contents:
@@ -54,14 +133,8 @@ class MainContentView(APIView):
                 'tagColor': tagColors.get(content.title, "primary"),
                  
             }
-            if content.title == "My Subjects":
-                # content_data['class_id'] = student_class.id
-                content_data['sub_title'] = student_class.name
-                
-                data.insert(0, content_data)  # Insert at the beginning
-                # data.append
-            else:
-                data.append(content_data)
+
+            data.append(content_data)
         # data['class'] = student_class.name
         responce = {
             'class': student_class.name,
@@ -158,7 +231,13 @@ class MainContentView(APIView):
 class SubjectList(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request,student_id,class_id):
-        student_class = get_object_or_404(Class, id=class_id)
+        student_class = Class.objects.get(id=class_id)
+        if not student_class:   
+            return api_response(
+                message="Class not found",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+                        )
         try:
             student = Student.objects.get(id=student_id, student_class=class_id)
         except Student.DoesNotExist:
@@ -268,6 +347,162 @@ class SubjectList(APIView):
             message_type="success",
             status_code=status.HTTP_200_OK,
             data=data,
+        )
+
+# class VideoTrackingView(APIView):
+#     # permission_classes = [permissions.IsAuthenticated]
+
+#     def post(self, request, student_id, class_id):
+#         """
+#         Store or update the watched duration for a video (subchapter).
+#         URL: /vedios_tracking/<student_id>/<class_id>
+#         Body: { "subchapter_id": 1, "watched_seconds": 120 }
+        
+#         """
+
+#         student_class = Class.objects.get(id=class_id)
+#         if not student_class:   
+#             return api_response(
+#                 message="Class not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#                         )
+#         try:
+#             student = Student.objects.get(id=student_id, student_class=class_id)
+#         except Student.DoesNotExist:
+#             return api_response(
+#                 message="Student not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#             )
+        
+#         subchapter_id = request.data.get("subchapter_id")
+#         watched_seconds = request.data.get("watched_seconds", 0)
+
+#         if not subchapter_id:
+#             return api_response(
+#                 message="subchapter_id is required",
+#                 message_type="error",
+#                 status_code=status.HTTP_400_BAD_REQUEST
+#             )
+#         subchapter = Subchapter.objects.filter(id=subchapter_id, course=class_id).first()
+#         if not subchapter:
+#             return api_response(
+#                 message="Subchapter not found",
+#                 message_type="error",
+#                 status_code=status.HTTP_404_NOT_FOUND
+#             )
+
+#         watched_duration = timedelta(seconds=int(watched_seconds))
+
+#         # ✅ Update or create tracking log
+#         tracking_log, created = VideoTrackingLog.objects.get_or_create(
+#             student=student,
+#             subchapter=subchapter,
+#             defaults={"watched_duration": watched_duration}
+#         )
+
+#         if not created:
+#             # Increment watched duration instead of overwriting
+#             tracking_log.watched_duration = watched_duration
+
+#         # ✅ Mark completed if watched >= video duration
+#         video_duration = parse_duration(subchapter.vedio_duration)
+#         if video_duration and tracking_log.watched_duration >= video_duration:
+#             tracking_log.completed = True
+#         else:
+#             tracking_log.completed = False
+
+#         tracking_log.save()
+
+#         return Response(
+#             {
+#                 "message": "Video tracking updated successfully",
+#                 "student": student.id,
+#                 "class": class_id,
+#                 "subchapter": subchapter.id,
+#                 "vedio_duration": subchapter.vedio_duration,
+#                 "watched_duration": str(tracking_log.watched_duration),
+#                 "completed": tracking_log.completed,
+#             },
+#             status=status.HTTP_200_OK
+#         )
+
+class VideoTrackingView(APIView):
+    # permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, student_id, class_id):
+        """
+        Store or update the watched duration for a video (subchapter).
+        """
+
+        # --- Validate class ---
+        try:
+            student_class = Class.objects.get(id=class_id)
+        except Class.DoesNotExist:
+            return api_response("Class not found", "error", status.HTTP_404_NOT_FOUND)
+
+        # --- Validate student ---
+        try:
+            student = Student.objects.get(id=student_id, student_class=student_class)
+        except Student.DoesNotExist:
+            return api_response("Student not found", "error", status.HTTP_404_NOT_FOUND)
+
+        # --- Validate input ---
+        subchapter_id = request.data.get("subchapter_id")
+        watched_seconds = request.data.get("watched_seconds", 0)
+
+        if not subchapter_id:
+            return api_response("subchapter_id is required", "error", status.HTTP_400_BAD_REQUEST)
+
+        try:
+            watched_seconds = int(watched_seconds)
+            if watched_seconds < 0 or watched_seconds > 36000:  # Limit to 10 hours
+                return api_response("Invalid watched duration", "error", status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return api_response("watched_seconds must be an integer", "error", status.HTTP_400_BAD_REQUEST)
+
+        # --- Validate subchapter ---
+        try:
+            subchapter = Subchapter.objects.get(id=subchapter_id, course=student_class)
+        except Subchapter.DoesNotExist:
+            return api_response("Subchapter not found", "error", status.HTTP_404_NOT_FOUND)
+
+        watched_duration = timedelta(seconds=watched_seconds)
+
+        # --- Update or create safely inside transaction ---
+        with transaction.atomic():
+            tracking_log, created = VideoTrackingLog.objects.select_for_update().get_or_create(
+                student=student,
+                subchapter=subchapter,
+                defaults={"watched_duration": watched_duration, "completed": False},
+            )
+
+            if not created:
+                # ✅ Either increment OR take max to avoid regress
+                tracking_log.watched_duration = max(tracking_log.watched_duration, watched_duration)
+
+            # --- Completion logic ---
+            video_duration = parse_duration(subchapter.vedio_duration)  # 👈 rename field to `video_duration`
+            if video_duration and tracking_log.watched_duration >= video_duration:
+                tracking_log.completed = True
+            # else:
+            #     tracking_log.completed = False
+
+            tracking_log.save()
+
+        # --- Response ---
+        return Response(
+            {
+                "message": "Video tracking updated successfully",
+                "student": student.id,
+                "class": student_class.id,
+                "subchapter": subchapter.id,
+                "video_duration": subchapter.vedio_duration,  # 👈 keep backward compatibility
+                "watched_duration": str(tracking_log.watched_duration),
+                "completed": tracking_log.completed,
+            },
+            status=status.HTTP_200_OK,
         )
 
 
