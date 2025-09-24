@@ -451,6 +451,7 @@ class VideoTrackingView(APIView):
         # --- Validate input ---
         subchapter_id = request.data.get("subchapter_id")
         watched_seconds = request.data.get("watched_seconds", 0)
+        is_favourate = request.data.get("is_favourate")
 
         if not subchapter_id:
             return api_response("subchapter_id is required", "error", status.HTTP_400_BAD_REQUEST)
@@ -484,8 +485,14 @@ class VideoTrackingView(APIView):
 
             # --- Completion logic ---
             video_duration = parse_duration(subchapter.vedio_duration)  # 👈 rename field to `video_duration`
-            if video_duration and tracking_log.watched_duration >= video_duration:
-                tracking_log.completed = True
+            if video_duration:
+                tracking_log.watched_duration = min(tracking_log.watched_duration, video_duration)
+
+                tracking_log.completed = tracking_log.watched_duration >= video_duration
+            else:
+                tracking_log.completed = False
+            if is_favourate is not None:
+                tracking_log.is_favourate = is_favourate
             # else:
             #     tracking_log.completed = False
 
@@ -501,6 +508,7 @@ class VideoTrackingView(APIView):
                 "video_duration": subchapter.vedio_duration,  # 👈 keep backward compatibility
                 "watched_duration": str(tracking_log.watched_duration),
                 "completed": tracking_log.completed,
+                "is_favourate": tracking_log.is_favourate,
             },
             status=status.HTTP_200_OK,
         )
@@ -564,21 +572,49 @@ class SubjectVediosView(APIView):
         data = []
         for chapter in chapters:
             subchapters = Subchapter.objects.filter(chapter=chapter).order_by("subchapter")
-            subchapter_data = [
-                {
- 
-                    "id": sub.id,
-                    "subchapter": sub.subchapter,
-                    "video_name": sub.video_name,
-                    "video_url": sub.video_url,
-                    "video_duration": sub.vedio_duration,
-                    "watched_duration": str(VideoTrackingLog.objects.filter(student=student, subchapter=sub).first().watched_duration) if VideoTrackingLog.objects.filter(student=student, subchapter=sub).exists() else "0:00:00",
-                    "completed": VideoTrackingLog.objects.filter(student=student, subchapter=sub).first().completed if VideoTrackingLog.objects.filter(student=student, subchapter=sub).exists() else False,
-                    "percentage_completed": (VideoTrackingLog.objects.filter(student=student, subchapter=sub).first().watched_duration.total_seconds() / parse_duration(sub.vedio_duration).total_seconds() * 100) if VideoTrackingLog.objects.filter(student=student, subchapter=sub).exists() and parse_duration(sub.vedio_duration) else 0,
-                    "created_at":sub.created_at
-                }
-                for sub in subchapters
-            ]
+            subchapter_data = []
+            for sub in subchapters:
+                # subchapter_tracking = VideoTrackingLog.objects.get(student=student, subchapter=sub.id)
+                try:
+                    log = VideoTrackingLog.objects.get(student=student, subchapter=sub.id)
+                    video_duration = parse_duration(sub.vedio_duration) if sub.vedio_duration else None
+                    watched_duration = log.watched_duration or timedelta(seconds=0)
+
+                    percentage_completed = (
+                        (watched_duration.total_seconds() / video_duration.total_seconds()) * 100
+                        if video_duration and video_duration.total_seconds() > 0
+                        else 0
+                    )
+
+                    subchapter_data.append({
+                        "id": sub.id,
+                        "subchapter": sub.subchapter,
+                        "video_name": sub.video_name,
+                        "video_url": sub.video_url,
+                        "video_duration": str(video_duration) if video_duration else "0:00:00",
+                        "watched_duration": str(watched_duration),
+                        "completed": log.completed,
+                        "percentage_completed": round(percentage_completed, 2),
+                        "is_favourate": log.is_favourate,
+                        "created_at": sub.created_at,
+                        "image": sub.tumbnail_image.url if sub.tumbnail_image else None,
+                    })
+                except VideoTrackingLog.DoesNotExist:
+                    subchapter_data.append({
+                        "id": sub.id,
+                        "subchapter": sub.subchapter,
+                        "video_name": sub.video_name,
+                        "video_url": sub.video_url,
+                        "video_duration": sub.vedio_duration if sub.vedio_duration else "0:00:00",
+                        "watched_duration": "0:00:00",
+                        "completed": False,
+                        "percentage_completed": 0,
+                        "is_favourate": False,
+                        "created_at": sub.created_at,
+                        "image": sub.tumbnail_image.url if sub.tumbnail_image else None,
+                    })
+
+           
             data.append({
                 "chapter_id": chapter.id,
                 "chapter_name": chapter.chapter_name,
