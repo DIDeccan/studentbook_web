@@ -65,12 +65,20 @@ class SubTopicAdmin(admin.ModelAdmin):
 class GeneralContentAdmin(admin.ModelAdmin):
     list_display = ['id','title',]
 
+class GeneralContentVideoAdmin(admin.ModelAdmin):
+
+    list_display = ['id','video_name','subtitle','main_content']
+
+    list_filter = ['main_content']
+
+
 
 admin.site.register(Subject,SubjectAdmin)
 admin.site.register(Semester,SemesterAdmin)
 admin.site.register(Chapter,ChapterAdmin)
 admin.site.register(Subchapter,SubChapterAdmin)
 admin.site.register(MainContent,GeneralContentAdmin)
+admin.site.register(GeneralContentVideo,GeneralContentVideoAdmin)
 
 
 #student dashboard models registration

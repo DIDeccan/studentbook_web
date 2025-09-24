@@ -572,6 +572,9 @@ class SubjectVediosView(APIView):
                     "video_name": sub.video_name,
                     "video_url": sub.video_url,
                     "video_duration": sub.vedio_duration,
+                    "watched_duration": str(VideoTrackingLog.objects.filter(student=student, subchapter=sub).first().watched_duration) if VideoTrackingLog.objects.filter(student=student, subchapter=sub).exists() else "0:00:00",
+                    "completed": VideoTrackingLog.objects.filter(student=student, subchapter=sub).first().completed if VideoTrackingLog.objects.filter(student=student, subchapter=sub).exists() else False,
+                    "percentage_completed": (VideoTrackingLog.objects.filter(student=student, subchapter=sub).first().watched_duration.total_seconds() / parse_duration(sub.vedio_duration).total_seconds() * 100) if VideoTrackingLog.objects.filter(student=student, subchapter=sub).exists() and parse_duration(sub.vedio_duration) else 0,
                     "created_at":sub.created_at
                 }
                 for sub in subchapters
