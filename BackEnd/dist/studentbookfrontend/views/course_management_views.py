@@ -11,6 +11,8 @@ from django.db.models import Sum, F, ExpressionWrapper, DurationField
 from django.db.models.functions import Cast
 from datetime import timedelta
 from studentbookfrontend.helper.api_response import parse_duration
+from django.db.models import Prefetch
+
 #Main Content View
 
 # class MainContentView(APIView):
@@ -505,7 +507,7 @@ class VideoTrackingView(APIView):
                 "student": student.id,
                 "class": student_class.id,
                 "subchapter": subchapter.id,
-                "video_duration": subchapter.vedio_duration,  # 👈 keep backward compatibility
+                "video_duration": str(video_duration) if video_duration else "0:00:00",  # 👈 keep backward compatibility
                 "watched_duration": str(tracking_log.watched_duration),
                 "completed": tracking_log.completed,
                 "is_favourate": tracking_log.is_favourate,
@@ -546,165 +548,76 @@ class ClassWIthSubjectsView(APIView):
 
 
 
-class SubjectVediosView(APIView):
- 
-    def get(self, request,student_id, class_id, subject_id):
-
-        student_class = Class.objects.get(id=class_id)
-        if not student_class:   
-            return api_response(
-                message="Class not found",
-                message_type="error",
-                status_code=status.HTTP_404_NOT_FOUND
-                        )
-        try:
-            student = Student.objects.get(id=student_id, student_class=class_id)
-        except Student.DoesNotExist:
-            return api_response(
-                message="Student not found",
-                message_type="error",
-                status_code=status.HTTP_404_NOT_FOUND
-            )
-
-
-        chapters = Chapter.objects.filter(course_id=class_id, subject_id=subject_id).order_by("chapter_number")
-    
-        data = []
-        for chapter in chapters:
-            subchapters = Subchapter.objects.filter(chapter=chapter).order_by("subchapter")
-            subchapter_data = []
-            for sub in subchapters:
-                # subchapter_tracking = VideoTrackingLog.objects.get(student=student, subchapter=sub.id)
-                try:
-                    log = VideoTrackingLog.objects.get(student=student, subchapter=sub.id)
-                    video_duration = parse_duration(sub.vedio_duration) if sub.vedio_duration else None
-                    watched_duration = log.watched_duration or timedelta(seconds=0)
-
-                    percentage_completed = (
-                        (watched_duration.total_seconds() / video_duration.total_seconds()) * 100
-                        if video_duration and video_duration.total_seconds() > 0
-                        else 0
-                    )
-
-                    subchapter_data.append({
-                        "id": sub.id,
-                        "subchapter": sub.subchapter,
-                        "video_name": sub.video_name,
-                        "video_url": sub.video_url,
-                        "video_duration": str(video_duration) if video_duration else "0:00:00",
-                        "watched_duration": str(watched_duration),
-                        "completed": log.completed,
-                        "percentage_completed": round(percentage_completed, 2),
-                        "is_favourate": log.is_favourate,
-                        "created_at": sub.created_at,
-                        "image": sub.tumbnail_image.url if sub.tumbnail_image else None,
-                    })
-                except VideoTrackingLog.DoesNotExist:
-                    subchapter_data.append({
-                        "id": sub.id,
-                        "subchapter": sub.subchapter,
-                        "video_name": sub.video_name,
-                        "video_url": sub.video_url,
-                        "video_duration": sub.vedio_duration if sub.vedio_duration else "0:00:00",
-                        "watched_duration": "0:00:00",
-                        "completed": False,
-                        "percentage_completed": 0,
-                        "is_favourate": False,
-                        "created_at": sub.created_at,
-                        "image": sub.tumbnail_image.url if sub.tumbnail_image else None,
-                    })
-
-           
-            data.append({
-                "chapter_id": chapter.id,
-                "chapter_name": chapter.chapter_name,
-                "chapter_number": chapter.chapter_number,
-                "subject": chapter.subject.name,
-                "subject_id": chapter.subject.id,
-                "class": chapter.course.name,
-                "subchapters": subchapter_data
-            })
- 
-        return Response(data, status=200)
- 
- 
 # class SubjectVediosView(APIView):
+ 
+#     def get(self, request,student_id, class_id, subject_id):
 
-#     def get(self, request, student_id, class_id, subject_id):
-#         # ✅ Query 1: Validate class existence
-#         student_class = Class.objects.filter(id=class_id).first()
-#         if not student_class:
+#         student_class = Class.objects.get(id=class_id)
+#         if not student_class:   
 #             return api_response(
 #                 message="Class not found",
 #                 message_type="error",
 #                 status_code=status.HTTP_404_NOT_FOUND
-#             )
-
-#         # ✅ Query 2: Validate student existence
-#         student = Student.objects.filter(id=student_id, student_class=class_id).first()
-#         if not student:
+#                         )
+#         try:
+#             student = Student.objects.get(id=student_id, student_class=class_id)
+#         except Student.DoesNotExist:
 #             return api_response(
 #                 message="Student not found",
 #                 message_type="error",
 #                 status_code=status.HTTP_404_NOT_FOUND
 #             )
 
-#         # ✅ Query 3: Chapters + Subchapters + Logs (prefetch)
-#         chapters = (
-#             Chapter.objects.filter(course_id=class_id, subject_id=subject_id)
-#             .order_by("chapter_number")
-#             .prefetch_related(
-#                 Prefetch(
-#                     "subchapter_set",
-#                     queryset=Subchapter.objects.order_by("subchapter"),
-#                     to_attr="prefetched_subchapters"
-#                 )
-#             )
-#         )
 
-#         # ✅ Preload logs in one query (filtered for all needed subchapters)
-#         all_subchapter_ids = [
-#             sub.id for chap in chapters for sub in chap.prefetched_subchapters
-#         ]
-#         logs = VideoTrackingLog.objects.filter(
-#             student=student, subchapter_id__in=all_subchapter_ids
-#         ).select_related("subchapter")
-
-#         # Map logs {subchapter_id: log}
-#         log_map = {log.subchapter_id: log for log in logs}
-
-#         # ✅ Build response
+#         chapters = Chapter.objects.filter(course_id=class_id, subject_id=subject_id).order_by("chapter_number")
+    
 #         data = []
 #         for chapter in chapters:
+#             subchapters = Subchapter.objects.filter(chapter=chapter).order_by("subchapter")
 #             subchapter_data = []
-#             for sub in chapter.prefetched_subchapters:
-#                 log = log_map.get(sub.id)
-#                 video_duration = parse_duration(sub.vedio_duration) if sub.vedio_duration else None
-#                 watched_duration = log.watched_duration if log else timedelta(seconds=0)
+#             for sub in subchapters:
+#                 # subchapter_tracking = VideoTrackingLog.objects.get(student=student, subchapter=sub.id)
+#                 try:
+#                     log = VideoTrackingLog.objects.get(student=student, subchapter=sub.id)
+#                     video_duration = parse_duration(sub.vedio_duration) if sub.vedio_duration else None
+#                     watched_duration = log.watched_duration or timedelta(seconds=0)
 
-#                 # # Cap watched time at video duration
-#                 # if video_duration and watched_duration > video_duration:
-#                 #     watched_duration = video_duration
+#                     percentage_completed = (
+#                         (watched_duration.total_seconds() / video_duration.total_seconds()) * 100
+#                         if video_duration and video_duration.total_seconds() > 0
+#                         else 0
+#                     )
 
-#                 percentage_completed = (
-#                     (watched_duration.total_seconds() / video_duration.total_seconds()) * 100
-#                     if log and video_duration and video_duration.total_seconds() > 0
-#                     else 0
-#                 )
+#                     subchapter_data.append({
+#                         "id": sub.id,
+#                         "subchapter": sub.subchapter,
+#                         "video_name": sub.video_name,
+#                         "video_url": sub.video_url,
+#                         "video_duration": str(video_duration) if video_duration else "0:00:00",
+#                         "watched_duration": str(watched_duration),
+#                         "completed": log.completed,
+#                         "percentage_completed": round(percentage_completed, 2),
+#                         "is_favourate": log.is_favourate,
+#                         "created_at": sub.created_at,
+#                         "image": sub.tumbnail_image.url if sub.tumbnail_image else None,
+#                     })
+#                 except VideoTrackingLog.DoesNotExist:
+#                     video_duration = parse_duration(sub.vedio_duration) if sub.vedio_duration else None
+#                     subchapter_data.append({
+#                         "id": sub.id,
+#                         "subchapter": sub.subchapter,
+#                         "video_name": sub.video_name,
+#                         "video_url": sub.video_url,
+#                         "video_duration": str(video_duration) if video_duration else "0:00:00",
+#                         "watched_duration": "0:00:00",
+#                         "completed": False,
+#                         "percentage_completed": 0,
+#                         "is_favourate": False,
+#                         "created_at": sub.created_at,
+#                         "image": sub.tumbnail_image.url if sub.tumbnail_image else None,
+#                     })
 
-#                 subchapter_data.append({
-#                     "id": sub.id,
-#                     "subchapter": sub.subchapter,
-#                     "video_name": sub.video_name,
-#                     "video_url": sub.video_url,
-#                     "video_duration": str(video_duration) if video_duration else "0:00:00",
-#                     "watched_duration": str(watched_duration),
-#                     "completed": log.completed if log else False,
-#                     "percentage_completed": round(percentage_completed, 2),
-#                     "is_favourate": log.is_favourate if log else False,
-#                     "created_at": sub.created_at,
-#                 })
-
+           
 #             data.append({
 #                 "chapter_id": chapter.id,
 #                 "chapter_name": chapter.chapter_name,
@@ -712,14 +625,110 @@ class SubjectVediosView(APIView):
 #                 "subject": chapter.subject.name,
 #                 "subject_id": chapter.subject.id,
 #                 "class": chapter.course.name,
-#                 "subchapters": subchapter_data,
+#                 "subchapters": subchapter_data
 #             })
-
+ 
 #         return api_response(
 #             message="Chapters and subchapters fetched successfully",
 #             message_type="success",
 #             status_code=status.HTTP_200_OK,
 #             data=data
 #         )
+ 
+ 
+class SubjectVediosView(APIView):
+
+    def get(self, request, student_id, class_id, subject_id):
+        # ✅ Query 1: Validate class existence
+        student_class = Class.objects.filter(id=class_id).first()
+        if not student_class:
+            return api_response(
+                message="Class not found",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        # ✅ Query 2: Validate student existence
+        student = Student.objects.filter(id=student_id, student_class=class_id).first()
+        if not student:
+            return api_response(
+                message="Student not found",
+                message_type="error",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        # ✅ Query 3: Chapters + Subchapters + Logs (prefetch)
+        chapters = (
+            Chapter.objects.filter(course_id=class_id, subject_id=subject_id)
+            .order_by("chapter_number")
+            .prefetch_related(
+                Prefetch(
+                    "subchapter_set",
+                    queryset=Subchapter.objects.order_by("subchapter"),
+                    to_attr="prefetched_subchapters"
+                )
+            )
+        )
+
+        # ✅ Preload logs in one query (filtered for all needed subchapters)
+        all_subchapter_ids = [
+            sub.id for chap in chapters for sub in chap.prefetched_subchapters
+        ]
+        logs = VideoTrackingLog.objects.filter(
+            student=student, subchapter_id__in=all_subchapter_ids
+        ).select_related("subchapter")
+
+        # Map logs {subchapter_id: log}
+        log_map = {log.subchapter_id: log for log in logs}
+
+        # ✅ Build response
+        data = []
+        for chapter in chapters:
+            subchapter_data = []
+            for sub in chapter.prefetched_subchapters:
+                log = log_map.get(sub.id)
+                video_duration = parse_duration(sub.vedio_duration) if sub.vedio_duration else None
+                watched_duration = log.watched_duration if log else timedelta(seconds=0)
+
+                # # Cap watched time at video duration
+                # if video_duration and watched_duration > video_duration:
+                #     watched_duration = video_duration
+
+                percentage_completed = (
+                    (watched_duration.total_seconds() / video_duration.total_seconds()) * 100
+                    if log and video_duration and video_duration.total_seconds() > 0
+                    else 0
+                )
+
+                subchapter_data.append({
+                    "id": sub.id,
+                    "subchapter": sub.subchapter,
+                    "video_name": sub.video_name,
+                    "video_url": sub.video_url,
+                    "video_duration": str(video_duration) if video_duration else "0:00:00",
+                    "watched_duration": str(watched_duration),
+                    "completed": log.completed if log else False,
+                    "percentage_completed": round(percentage_completed, 2),
+                    "is_favourate": log.is_favourate if log else False,
+                    "created_at": sub.created_at,
+                    "image": sub.tumbnail_image.url if sub.tumbnail_image else None,
+                })
+
+            data.append({
+                "chapter_id": chapter.id,
+                "chapter_name": chapter.chapter_name,
+                "chapter_number": chapter.chapter_number,
+                "subject": chapter.subject.name,
+                "subject_id": chapter.subject.id,
+                "class": chapter.course.name,
+                "subchapters": subchapter_data,
+            })
+
+        return api_response(
+            message="Chapters and subchapters fetched successfully",
+            message_type="success",
+            status_code=status.HTTP_200_OK,
+            data=data
+        )
 
  

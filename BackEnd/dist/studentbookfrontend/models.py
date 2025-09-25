@@ -306,6 +306,7 @@ class Chapter(models.Model):
 class Subchapter(models.Model):
     subchapter = models.CharField(max_length=20)
     parent_subchapter = models.CharField(max_length=50, blank=True)
+    description = models.TextField(blank=True, null=True)
     tumbnail_image = models.FileField(upload_to='images/subchapter_thumbnails/',blank=True, null=True,storage = S3Boto3Storage )
     course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='subchapter')
     subject = ChainedForeignKey(Subject, chained_field="course",chained_model_field="course" ,on_delete=models.CASCADE, related_name="subchapter")
@@ -336,7 +337,8 @@ class Subchapter(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.video_name} (Class {self.course}, Subject {self.subject})"
+        # return f"{self.video_name} (Class {self.course}, Subject {self.subject})"
+        return f" {self.course} - {self.subject} - {self.subchapter}"
 
         
 class MainContent(models.Model):
@@ -366,6 +368,7 @@ class GeneralContentVideo(models.Model):
         # limit_choices_to=~models.Q(title__iexact="My Subjects")  # exclude My Subjects
     )
     discription = models.TextField(blank=True, null=True)
+    tumbnail_image = models.FileField(upload_to='images/general_content_video_thumbnails/',blank=True, null=True,storage = S3Boto3Storage )
     video_url = models.URLField()
     vedio_duration = models.CharField(max_length=50, blank=True, null=True)  # e.g. "15:30"
     created_at = models.DateTimeField(auto_now_add=True)
@@ -383,8 +386,14 @@ class VideoTrackingLog(models.Model):
     completed = models.BooleanField(default=False)
     is_favourate = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
         return f"{self.student} - {self.subchapter} ({self.watched_duration})"
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['student', 'subchapter'], name='unique_student_subchapter')
+        ]
 
 
 # class AssessmentResult(models.Model):
