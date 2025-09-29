@@ -290,7 +290,7 @@ class Chapter(models.Model):
     chapter_name = models.CharField(max_length=255)
     chapter_number = models.IntegerField(null=True, blank=True)
     description = models.CharField(max_length=255, blank=True, null=True)
-    chapter_icon = models.ImageField(upload_to='images/chapter_icons/', blank=True, null=True)
+    chapter_icon = models.ImageField(upload_to='images/chapter_icons/', blank=True, null=True, storage=S3Boto3Storage())
     course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='chapters')
     subject = ChainedForeignKey(Subject, chained_field="course",chained_model_field="course" ,on_delete=models.CASCADE, related_name="chapters")
     # semester = ChainedForeignKey(Semester,chained_field="subject",chained_model_field="subject", on_delete=models.CASCADE, related_name='chapters',null=True, blank=True)

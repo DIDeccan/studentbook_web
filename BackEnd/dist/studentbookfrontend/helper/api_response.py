@@ -21,6 +21,18 @@ def api_response(message="", message_type="info", data=None, status_code=200):
 
 
 
+def parse_duration_mmss(duration_str):
+    """
+    Convert 'MM:SS' string to timedelta.
+    """
+    try:
+        if not duration_str:
+            return timedelta(0)
+        m, s = map(int, duration_str.split(":"))
+        return timedelta(minutes=m, seconds=s)
+    except Exception:
+        return timedelta(0)
+
 
 def parse_duration(duration_str):
     """
