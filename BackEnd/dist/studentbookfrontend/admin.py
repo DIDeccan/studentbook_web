@@ -86,7 +86,11 @@ class VideoTrackingLogAdmin(admin.ModelAdmin):
     list_display = ['id','student','subchapter','watched_duration','completed','created_at']
     list_filter = ['student','subchapter','completed']  
 
+class VideoWatchSessionAdmin(admin.ModelAdmin):
+    list_display = ['id','student','subchapter','watched_duration','started_at','ended_at']
+    list_filter = ['student','subchapter']
+
 
 admin.site.register(VideoTrackingLog,VideoTrackingLogAdmin)
-
+admin.site.register(VideoWatchSession,VideoWatchSessionAdmin)
 

@@ -396,6 +396,16 @@ class VideoTrackingLog(models.Model):
         ]
 
 
+class VideoWatchSession(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    subchapter = models.ForeignKey(Subchapter, on_delete=models.CASCADE, related_name="watch_sessions")
+    watched_duration = models.DurationField(default=0)  # duration in this session only
+    started_at = models.DateTimeField(auto_now_add=True)  # session start
+    ended_at = models.DateTimeField(auto_now=True)       # session end
+    def __str__(self):
+        return f"{self.student} - {self.subchapter} ({self.watched_duration})"
+
+
 # class AssessmentResult(models.Model):
 #     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assessments")
 #     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)

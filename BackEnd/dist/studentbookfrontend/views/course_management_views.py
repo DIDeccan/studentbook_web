@@ -423,6 +423,28 @@ class VideoTrackingView(APIView):
                 defaults={"watched_duration": watched_duration, "completed": False},
             )
 
+            # session_log = VideoWatchSession.objects.create(
+            #     student=student,
+            #     subchapter=subchapter,
+            #     watched_duration=watched_duration)
+            today = timezone.now().date()
+            session_log,is_created = VideoWatchSession.objects.update_or_create(
+                student=student,
+                subchapter=subchapter,
+                started_at__date=today,  # same day
+                # defaults={"watched_duration": watched_duration},
+            )
+
+
+            if is_created:
+                session_log.watched_duration = watched_duration
+            else:
+            
+                if watched_duration > tracking_log.watched_duration:
+                    session_log.watched_duration = session_log.watched_duration + watched_duration - tracking_log.watched_duration
+                session_log.save()
+            
+
             if not created:
                 # ✅ Either increment OR take max to avoid regress
                 tracking_log.watched_duration = max(tracking_log.watched_duration, watched_duration)
