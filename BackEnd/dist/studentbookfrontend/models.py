@@ -406,6 +406,31 @@ class VideoWatchSession(models.Model):
         return f"{self.student} - {self.subchapter} ({self.watched_duration})"
 
 
+#tracking models for general content videos
+class GeneralContentVideoTrackingLog(models.Model):
+    student = models.ForeignKey("Student", on_delete=models.CASCADE, related_name="general_content_videotracking_log")
+    general_content_video = models.ForeignKey(GeneralContentVideo, on_delete=models.CASCADE, related_name="videotracking_log")
+    watched_duration = models.DurationField(default=0)  # actual time user watched
+    completed = models.BooleanField(default=False)
+    is_favourate = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return f"{self.student} - {self.general_content_video} ({self.watched_duration})"
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['student', 'general_content_video'], name='unique_student_general_content_video')
+        ]
+class GeneralContentVideoWatchSession(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    general_content_video = models.ForeignKey(GeneralContentVideo, on_delete=models.CASCADE, related_name="watch_sessions")
+    watched_duration = models.DurationField(default=0)  # duration in this session only
+    started_at = models.DateTimeField(auto_now_add=True)  # session start
+    ended_at = models.DateTimeField(auto_now=True)       # session end
+    def __str__(self):
+        return f"{self.student} - {self.general_content_video} ({self.watched_duration})"
+
+
 # class AssessmentResult(models.Model):
 #     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assessments")
 #     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)

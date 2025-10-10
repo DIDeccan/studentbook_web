@@ -81,7 +81,7 @@ admin.site.register(MainContent,GeneralContentAdmin)
 admin.site.register(GeneralContentVideo,GeneralContentVideoAdmin)
 
 
-#student dashboard models registration
+#student Tracking models registration
 class VideoTrackingLogAdmin(admin.ModelAdmin):
     list_display = ['id','student','subchapter','watched_duration','completed','created_at']
     list_filter = ['student','subchapter','completed']  
@@ -90,7 +90,16 @@ class VideoWatchSessionAdmin(admin.ModelAdmin):
     list_display = ['id','student','subchapter','watched_duration','started_at','ended_at']
     list_filter = ['student','subchapter']
 
+class GeneralContentVideoTrackingLogAdmin(admin.ModelAdmin):
+    list_display = ['id','student','general_content_video','watched_duration','completed','created_at','is_favourate']
+    list_filter = ['student','general_content_video','completed']
+
+class GeneralContentVideoWatchSessionAdmin(admin.ModelAdmin):
+    list_display = ['id','student','general_content_video','watched_duration','started_at','ended_at']
+    list_filter = ['student','general_content_video']
 
 admin.site.register(VideoTrackingLog,VideoTrackingLogAdmin)
 admin.site.register(VideoWatchSession,VideoWatchSessionAdmin)
+admin.site.register(GeneralContentVideoTrackingLog,GeneralContentVideoTrackingLogAdmin)
+admin.site.register(GeneralContentVideoWatchSession,GeneralContentVideoWatchSessionAdmin)
 
