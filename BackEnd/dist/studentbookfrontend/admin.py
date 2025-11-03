@@ -40,6 +40,10 @@ admin.site.register(SubscriptionOrder,SubscriptionOrderAdmin)
 
 #course models registrations
 
+class BoardAdmin(admin.ModelAdmin):
+
+    list_display = ['id', 'name','state']
+
 class SubjectAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'course' ]
     list_filter = ['course',]
@@ -72,7 +76,7 @@ class GeneralContentVideoAdmin(admin.ModelAdmin):
     list_filter = ['main_content']
 
 
-
+admin.site.register(Board,BoardAdmin)
 admin.site.register(Subject,SubjectAdmin)
 admin.site.register(Semester,SemesterAdmin)
 admin.site.register(Chapter,ChapterAdmin)

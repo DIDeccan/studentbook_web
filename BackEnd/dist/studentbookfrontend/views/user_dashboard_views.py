@@ -158,7 +158,7 @@ class TopicInterestChartAPIView(APIView):
         # -----------------------------
         # 1️⃣ Course Subjects
         # -----------------------------
-        all_subjects = Subject.objects.filter(course=class_obj)
+        all_subjects = Subject.objects.filter(course=class_obj, board=student.board)
         all_main_contents = MainContent.objects.all()
 
         # Subchapter video durations per subject
@@ -257,7 +257,7 @@ class WeeklyLearningTrendsAPI(APIView):
 
         #  Step 2: Subjects
         all_subjects = list(
-            Subject.objects.filter(course=class_obj)
+            Subject.objects.filter(course=class_obj, board=user.board)
             .values_list("name", flat=True)
             .order_by("id")
         )

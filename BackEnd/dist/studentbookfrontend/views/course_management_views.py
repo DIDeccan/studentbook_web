@@ -109,7 +109,7 @@ class SubjectList(APIView):
             )
 
         # 1️⃣ Fetch all subjects for the class in one query
-        subjects = Subject.objects.filter(course_id=class_id).order_by("id")
+        subjects = Subject.objects.filter(course_id=class_id, board=student.board).order_by("id")
 
         # 2️⃣ Fetch subchapters for all subjects (avoid N+1 queries)
         subchapters = Subchapter.objects.filter(subject__in=subjects).select_related(
@@ -154,7 +154,6 @@ class SubjectList(APIView):
 
         # 7️⃣ Build response
         data = []
-        print(watched_map.get(8))
         for subject in subjects:
             total_time = total_map.get(subject.id, timedelta(0))
             watched_time = watched_map.get(subject.id, timedelta(0))
@@ -191,7 +190,7 @@ class SubjectList(APIView):
 
 
 class VideoTrackingView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, student_id, class_id):
         """
@@ -329,7 +328,7 @@ class ClassWIthSubjectsView(APIView):
  
  
 class SubjectVediosView(APIView):
-
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request, student_id, class_id, subject_id):
         # ✅ Query 1: Validate class existence
         student_class = Class.objects.filter(id=class_id).first()
@@ -499,7 +498,7 @@ class GeneralVediosView(APIView):
 
 
 class GeneralVideoTrackingView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, student_id, general_content_id):
         """

@@ -7,7 +7,7 @@ def api_response(message="", message_type="info", data=None, status_code=200):
     
     message_type: success | warning | error | info
     """
-    if data:
+    if data is not None:
         return Response({
             "message": message,
             "message_type": message_type,

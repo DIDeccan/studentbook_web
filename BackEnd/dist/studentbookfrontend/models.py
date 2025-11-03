@@ -67,6 +67,14 @@ class StudentPackage(models.Model):
     def __str__(self):
         return f"{self.student.email} - {self.course.name}"
 
+class Board(models.Model):
+    name = models.CharField(max_length=150)
+    state = models.CharField(max_length=100, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.state})" if self.state else self.name
+
+
 
 class UserManager(BaseUserManager):
     def create_user(self, phone_number, password=None):
@@ -170,6 +178,7 @@ class Student(User):
     # school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="students", null=True,blank=True)
     school = models.CharField(max_length=255, null=True, blank=True)
     student_class = models.ForeignKey(Class, on_delete=models.CASCADE, related_name="main_students")
+    board = models.ForeignKey(Board, on_delete=models.SET_NULL, null=True, blank=True, related_name="students")
 
 
     def save(self, *args, **kwargs):
@@ -254,6 +263,7 @@ class Subject(models.Model):
     """
     name = models.CharField(max_length=100)
     content = models.TextField(null=True, blank=True)
+    board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='subjects')
     image = models.ImageField(upload_to='images/subject_icons/', blank=True, null=True,storage=S3Boto3Storage())
     course = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='subjects')
     icon = models.CharField(max_length=100, blank=True, null=True)

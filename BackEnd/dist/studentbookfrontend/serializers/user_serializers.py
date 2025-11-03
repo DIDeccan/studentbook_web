@@ -127,6 +127,11 @@ class ClassSerializer(serializers.ModelSerializer):
         model = Class
         fields = ['id', 'name','amount']
 
+class BoardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Board
+        fields = ['id', 'name']
+
 class SchoolSerializer(serializers.ModelSerializer):
     class Meta:
         model = School

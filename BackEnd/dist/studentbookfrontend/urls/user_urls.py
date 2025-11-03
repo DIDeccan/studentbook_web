@@ -21,4 +21,7 @@ urlpatterns = [
     path("resend_otp", ResendOtpAPIView.as_view()),
     path("verify-otp", OtpVerificationAPIView.as_view()),
 
+    #board list
+    path("board_list", BoardListAPIView.as_view()),
+
 ]

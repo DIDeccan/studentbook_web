@@ -120,6 +120,20 @@ class ClassListAPIView(APIView):
             data=serializer.data
         )
 
+#board list api
+class BoardListAPIView(APIView):
+    # permission_classes = [IsAuthenticated]
+    queryset = Board.objects.all()
+    def get(self, request, format=None):
+        boards = Board.objects.all().order_by('id')
+        serializer = BoardSerializer(boards, many=True)
+        return api_response(
+            message="Board List Data.",
+            message_type="success",
+            status_code=status.HTTP_200_OK,
+            data=serializer.data
+        )
+
 class StudentListAPIView(APIView):
     # permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
@@ -467,6 +481,15 @@ class StudentRegisterAPIView(APIView):
                                 message_type="error",
                                 status_code=status.HTTP_400_BAD_REQUEST
                             )
+            board = json_data['board_id']
+            try:
+                board_obj = Board.objects.get(id=board)
+            except Board.DoesNotExist:
+                return api_response(
+                                message="Board not found",
+                                message_type="error",
+                                status_code=status.HTTP_400_BAD_REQUEST
+                            )
             phone_number = json_data.get("phone_number")
             if not phone_number:
                 return api_response(
@@ -489,6 +512,7 @@ class StudentRegisterAPIView(APIView):
                 zip_code=json_data.get("zip_code"),
                 user_type="student",
                 student_class=class_obj,
+                board=board_obj,
                 is_active=False
             )
             customer_register.set_password(json_data['password'])
