@@ -67,9 +67,14 @@ class StudentPackage(models.Model):
     def __str__(self):
         return f"{self.student.email} - {self.course.name}"
 
+class State(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 class Board(models.Model):
     name = models.CharField(max_length=150)
-    state = models.CharField(max_length=100, null=True, blank=True)
+    state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='boards', null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.state})" if self.state else self.name

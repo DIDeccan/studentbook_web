@@ -23,5 +23,6 @@ urlpatterns = [
 
     #board list
     path("board_list", BoardListAPIView.as_view()),
+    path("state_list", StateListAPIView.as_view()),
 
 ]

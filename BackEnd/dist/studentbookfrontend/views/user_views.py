@@ -123,15 +123,59 @@ class ClassListAPIView(APIView):
 #board list api
 class BoardListAPIView(APIView):
     # permission_classes = [IsAuthenticated]
-    queryset = Board.objects.all()
+
     def get(self, request, format=None):
-        boards = Board.objects.all().order_by('id')
-        serializer = BoardSerializer(boards, many=True)
+        data = {}
+        cbse_board = Board.objects.filter(state__name="India").first()
+
+        # Fetch all states except 'India'
+        states = State.objects.exclude(name="India").order_by('id')
+
+        for state in states:
+            state_boards = []
+
+            # Always include CBSE
+            if cbse_board:
+                state_boards.append({
+                    "id": cbse_board.id,
+                    "name": cbse_board.name,
+                })
+
+            # Add state-specific boards
+            board = Board.objects.get(state=state)
+            state_boards.append({
+                "id": board.id,
+                "name": board.name,
+            })
+
+            # Store under the state id key
+            data[state.id] = state_boards
+
         return api_response(
             message="Board List Data.",
             message_type="success",
             status_code=status.HTTP_200_OK,
-            data=serializer.data
+            data=data
+        )
+
+class StateListAPIView(APIView):
+    # permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        states = State.objects.all().order_by('id')
+        data = []
+        for state in states:
+            if state.name!="India":
+                
+                data.append({
+                    "id": state.id,
+                    "name": state.name,
+                })
+        
+        return api_response(
+            message="State List Data.",
+            message_type="success",
+            status_code=status.HTTP_200_OK,
+            data=data
         )
 
 class StudentListAPIView(APIView):
