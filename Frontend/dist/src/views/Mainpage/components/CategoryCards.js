@@ -17,27 +17,6 @@ import { fetchContentData } from "../../../redux/contentSlice";
 import { BASE_URL } from "../../../apis/endpoints";
 
 const CategoryCards = () => {
-  const dispatch = useDispatch();
-  const { loading, error, data } = useSelector((state) => state.content);
-
-  const { userData } = useSelector((state) => state.auth);
-const studentId = userData?.student_id;
-const classId = userData?.class_id;
-
-useEffect(() => {
-  if (studentId && classId) {
-    dispatch(fetchContentData({ studentId, classId }));
-  }
-}, [dispatch, studentId, classId]);
-
-
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return "/placeholder.jpg";
-  if (imagePath.startsWith("http")) return imagePath;
-
-  // Ensure no double slashes
-  return `${BASE_URL.replace(/\/+$/, "")}${imagePath}`;
-};
 
   return (
     <Container className="py-5">

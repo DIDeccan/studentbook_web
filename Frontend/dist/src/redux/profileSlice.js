@@ -35,17 +35,7 @@ export const fetchStudentProfile = createAsyncThunk(
   async ({ studentId, classId }, { getState, rejectWithValue }) => {
     try {
       // const token =
-      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
-     const token = getState().auth?.accessToken;
-      if (!token) return rejectWithValue("No auth token found");
-
-      const { studentId: sid, classId: cid } = resolveIds(studentId, classId, getState());
-      if (!sid || !cid)
-        return rejectWithValue("Missing studentId or classId (student_class)");
-
-      const res = await api.get(API_ENDPOINTS.STUDENTS.PROFILE(sid, cid), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+   
 
       return res.data;
     } catch (err) {
@@ -59,18 +49,7 @@ export const updateStudentProfile = createAsyncThunk(
   "studentProfile/update",
   async ({ studentId, classId, payload }, { getState, rejectWithValue }) => {
     try {
-      // const token =
-      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
-     const token = getState().auth?.accessToken;
-      if (!token) return rejectWithValue("No auth token found");
-
-      const { studentId: sid, classId: cid } = resolveIds(studentId, classId, getState());
-      if (!sid || !cid)
-        return rejectWithValue("Missing studentId or classId (student_class)");
-
-      const res = await api.put(API_ENDPOINTS.STUDENTS.PROFILE(sid, cid), payload, {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      });
+  
 
       toast.success("Profile updated successfully");
       return res.data;
@@ -85,17 +64,7 @@ export const uploadStudentProfileImage = createAsyncThunk(
   "studentProfile/uploadImage",
   async ({ studentId, classId, file }, { getState, rejectWithValue }) => {
     try {
-      // const token =
-      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
-      const token = getState().auth?.accessToken;
-      if (!token) return rejectWithValue("No auth token found");
-
-      const { studentId: sid, classId: cid } = resolveIds(studentId, classId, getState());
-      if (!sid || !cid)
-        return rejectWithValue("Missing studentId or classId (student_class)");
-
-      const formData = new FormData();
-      formData.append("profile_image", file);
+    
 
       const res = await api.put(API_ENDPOINTS.STUDENTS.PROFILE(sid, cid), formData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
@@ -115,21 +84,7 @@ export const removeStudentProfileImage = createAsyncThunk(
   "studentProfile/removeImage",
   async ({ studentId, classId }, { getState, rejectWithValue }) => {
     try {
-      // const token =
-      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
-      const token = getState().auth?.accessToken;
-      if (!token) return rejectWithValue("No auth token found");
-
-      const { studentId: sid, classId: cid } = resolveIds(studentId, classId, getState());
-      if (!sid || !cid)
-        return rejectWithValue("Missing studentId or classId");
-
-      const res = await api.put(
-        API_ENDPOINTS.STUDENTS.PROFILE(sid, cid),
-        { profile_image: null },
-        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-      );
-
+    
       return res.data;
     } catch (err) {
       const message = err.response?.data?.message || err.message || "Remove failed";
@@ -144,16 +99,7 @@ export const sendPhoneOtp = createAsyncThunk(
   "studentProfile/sendPhoneOtp",
   async ({ studentId, classId, newPhone }, { getState, rejectWithValue }) => {
     try {
-      // const token =
-      //   getState().auth?.accessToken || localStorage.getItem("accessToken");
-       const token = getState().auth?.accessToken;
-      if (!token) return rejectWithValue("No auth token found");
-
-      const res = await api.put(
-        API_ENDPOINTS.STUDENTS.PROFILE(studentId, classId),
-        { phone_number: newPhone },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+   
 
       toast.success("OTP sent to your phone");
       return res.data;

@@ -192,133 +192,17 @@ const Login = () => {
   Sign Up
 </Button> */}
 
-<Button
-  outline
-  color="primary"
-  className="me-2"
-  onClick={() => {
-     console.log("🔹 Sign Up button clicked")
-
-    const storedAuth = localStorage.getItem("authData")
-    const authData = storedAuth ? JSON.parse(storedAuth) : null
-    const token = authData?.accessToken
-
-    // Ensure selectedClass is synced with user's class
-    const storedClasses = classData.length ? classData : JSON.parse(localStorage.getItem("classData")) || []
-    let preselectedClass = null
-
-    if (authData?.user?.class_id && storedClasses.length > 0) {
-      preselectedClass = storedClasses.find(
-        (c) => String(c.id) === String(authData.user.class_id)
-      )
-
-      if (preselectedClass) {
-        console.log("✅ Preselected class:", preselectedClass)
-        setSelectedClass(preselectedClass)
-      }
-    }
-
-    if (token) {
-      console.log("🔹 User logged in, opening PaymentModal")
-      setPaymentOpen(true)
-    } else {
-      console.log("🔹 User not logged in, opening Register modal")
-      setRegisterOpen(true)
-    }
-  
-  }}
->
-  Sign Up
-</Button>
 
 
             <Button color="primary" className="me-2" onClick={() => setLoginModalOpen(true)}>Log In</Button>
           </div>
         </div>
-        <Register
-          isOpen={registerOpen}
-          toggle={() => setRegisterOpen(!registerOpen)}
-          openPayment={() => {
-            setRegisterOpen(false);
-            setPaymentOpen(true);
-          }}
-          selectedClass={selectedClass}
-           setSelectedClass={setSelectedClass}
-          preselectClass={true}
-        />
-
-        <PaymentModal
-          isOpen={paymentOpen}
-          toggle={() => setPaymentOpen(!paymentOpen)}
-          classInfo={selectedClass}
-        />
-        <LoginBasic
-          isOpen={loginModalOpen}
-          toggle={toggleLoginModal}
-          openRegister={() => {
-            setLoginModalOpen(false)
-            setModalOpen(true)
-          }}
-        />
+ 
 
       </div>
-      <Container fluid className="d-flex flex-column flex-lg-row align-items-center justify-content-between px-5 pb-5 pt-2 hero-content">
-        <div className="text-start pt-5" style={{ maxWidth: '900px' }}>
-          <h1
-            className="fw-bold display-4 mb-3"
-            style={{
-              background: "linear-gradient(90deg, #7db2ddff, #e52e71)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent"
-            }}
-          >
-            Your Course To Success
-          </h1>
-          <p className="lead">
-            <strong>
-              Learning made fun, interactive, and effective — specially designed for students from Classes 6 to 10.
-            </strong>
-          </p>
 
-          <p className="lead">
-            <strong>
-              Explore subjects, quizzes, and live doubt-solving with top educators.
-            </strong>
-          </p>
-
-          <p className="lead">
-            <strong>
-              Track your progress with personalized dashboards, earn badges for achievements, and access offline videos anytime, anywhere.
-            </strong>
-          </p>
-
-          <p className="lead">
-            <strong>
-              Join a community of curious learners, participate in competitions, and strengthen your concepts with hands-on practice.
-            </strong>
-          </p>
-
-
-          <div className="mt-4">
-            <Button size="lg" color="primary" className="me-3 shadow">
-              🚀 Get Started
-            </Button>
-            <Button size="lg" outline color="dark">
-              ▶ Watch Demo
-            </Button>
-          </div>
-          <p className="mt-4 lead">🌟 Trusted by <b>10,000+ Students</b> Across India</p>
-        </div>
-
-        <div className="pt-4 pt-lg-0">
-          <img className='img-fluid' src={source} alt='Login Cover' />
-        </div>
-      </Container>
       <div>
-        <SwiperBook />
-        <Classcard />
-        <WhyChooseUs />
-        <Footer />
+   
       </div>
 
 

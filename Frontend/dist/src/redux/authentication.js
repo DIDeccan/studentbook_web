@@ -34,16 +34,7 @@ export const signupUser = createAsyncThunk(
   "auth/signupUser",
   async (userData, { rejectWithValue }) => {
     try {
-      const payload = {
-        email: userData.email,
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        phone_number: userData.phone,
-        class_id: userData.classLevel,
-        user_type: "student",
-        password: userData.password,
-        confirm_password: userData.confirmPassword,
-      };
+     
       const response = await api.post(
         API_ENDPOINTS.AUTH.REGISTER,
         payload,
@@ -92,11 +83,6 @@ export const createOrder = createAsyncThunk("auth/createOrder", async (_, { getS
     const studentClass = registrationData?.class_id || userData?.class_id;
     if (!studentClass) return rejectWithValue("Student class missing.");
 
-    const res = await api.post(
-      API_ENDPOINTS.PAYMENT.CREATE_ORDER,
-      { class_id: studentClass, price: 1000 },
-      // { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
 
     return res.data.data;
   } catch (err) {
@@ -140,18 +126,7 @@ export const forgotPassword = createAsyncThunk(
     try {
       let res;
 
-      if (!otp) {
-        res = await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { user: phone });
-      } else if (otp && !newPassword) {
-        res = await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { user: phone, otp });
-      } else {
-        res = await api.put(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
-          user: phone,
-          new_password: newPassword,
-          confirm_new_password: confirmPassword,
-        });
-      }
-
+   
       return res.data.message || "Operation successful";
     } catch (err) {
       return rejectWithValue(
@@ -169,10 +144,6 @@ export const logoutUser = createAsyncThunk(
     try {
       const { accessToken, refreshToken } = getState().auth;
 
-      if (!accessToken || !refreshToken) {
-          clearAuthData();
-        return rejectWithValue("No active session");
-      }
 
       const response = await api.post(
         API_ENDPOINTS.AUTH.LOGOUT,

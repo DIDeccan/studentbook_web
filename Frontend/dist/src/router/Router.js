@@ -28,13 +28,11 @@ const Router = () => {
 
   const allRoutes = getRoutes(layout)
 
-    const user = getUserData()
-    console.log(user);
     
   const getHomeRoute = () => {
   
     if (user) {
-      return getHomeRouteForLoggedInUser(user.user_type)
+    
     } else {
       return '/login'
     }
@@ -52,20 +50,7 @@ const Router = () => {
     //   meta: { restricted: true }, 
     //   children: [{ path: '/login', element: <Login /> }]
     // },
-    {
-  path: '/login',
-  element: <BlankLayout />,
-  children: [
-    {
-      path: '/login',
-      element: (
-        <PublicRoute route={{ meta: { restricted: true } }}>
-          <Login />
-        </PublicRoute>
-      )
-    }
-  ]
-},
+ 
 
     // {
     //   path: '/auth/not-auth',

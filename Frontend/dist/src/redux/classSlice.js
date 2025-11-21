@@ -15,9 +15,7 @@ export const fetchClasses = createAsyncThunk(
 );
 
 const classSlice = createSlice({
-  name: "classes",
-  initialState: { data: [], loading: false, error: null },
-  reducers: {},
+
   extraReducers: (builder) => {
     builder
       .addCase(fetchClasses.pending, (state) => {

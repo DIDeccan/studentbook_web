@@ -19,45 +19,7 @@ const LoginBasic = ({ isOpen, toggle, openRegister, openForgotPassword }) => {
     defaultValues: { username: "", password: "" }
   });
 
-  const onSubmit = async (data) => {
-    try {
-      toast.loading("Logging in...");
-      const resultAction = await dispatch(loginUser({
-        phone_number: data.username,
-        password: data.password
-      }));
-      toast.dismiss();
 
-      if (loginUser.fulfilled.match(resultAction)) {
-        const user = resultAction.payload;
-
-
-        dispatch(updateUserData(user));
-        localStorage.setItem("authData", JSON.stringify(user));
-
-        ability.update([{ action: 'manage', subject: 'all' }]);
-        toast.success("Login successful!");
-
-        toggle();
-
-        const role = user.user_type || "student";
-        navigate(getHomeRouteForLoggedInUser(role));
-
-      } else {
-        const message = resultAction.payload?.message || "Login failed";
-
-        if (message?.toLowerCase().includes("password")) {
-          setError("password", { type: "manual", message });
-        } else {
-          setError("username", { type: "manual", message });
-        }
-        toast.error(message);
-      }
-    } catch (err) {
-      toast.dismiss();
-      toast.error("Something went wrong");
-    }
-  };
 
   return (
     <Modal isOpen={isOpen} toggle={toggle} centered>

@@ -20,41 +20,7 @@ const Classcard = () => {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
 
-  useEffect(() => {
-    if (!userData) {
-      const storedProfile = localStorage.getItem("studentProfileData");
-      if (storedProfile) {
-        dispatch(updateUserData(JSON.parse(storedProfile)));
-      }
-    }
-  }, [dispatch, userData]);
 
-  const registeredClassId = userData?.class_id ? String(userData.class_id) : null;
-  const isPaid = userData?.is_paid || false;
-
-  useEffect(() => {
-    dispatch(fetchClasses());
-  }, [dispatch]);
-
-  const handleSubscribe = (cls) => {
-    setSelectedClass(cls);
-    if (accessToken) {
-      setIsPaymentOpen(true);
-    } else {
-      setIsRegisterOpen(true);
-    }
-  };
-
-  const handlePaymentSuccess = () => {
-    const updatedProfile = {
-      ...userData,
-      is_paid: true,
-      class_id: selectedClass?.id,
-    };
-    dispatch(updateUserData(updatedProfile));
-    localStorage.setItem("studentProfileData", JSON.stringify(updatedProfile));
-    setIsPaymentOpen(false);
-  };
 
   return (
     <div style={{ padding: "2rem", position: "relative" }}>

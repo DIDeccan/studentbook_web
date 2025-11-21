@@ -8,20 +8,7 @@ import { useNavigate } from "react-router-dom";
 
 const MySubjects = () => {
   const [subjects, setSubjects] = useState([]);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    setTimeout(() => {
-      setSubjects([
-        { id: 1, name: "Hindi", category: "Language", level: "Class 6", description: "Learn Hindi grammar, vocabulary, and literature with interactive lessons.", chapters: 12, progress: 40, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
-        { id: 2, name: "Telugu", category: "Language", level: "Class 6", description: "Master Telugu language skills with reading and writing practice.", chapters: 10, progress: 20, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
-        { id: 3, name: "Mathematics", category: "STEM", level: "Class 6", description: "Covers arithmetic, geometry, and basic algebra concepts.", chapters: 15, progress: 60, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
-        { id: 4, name: "Science", category: "STEM", level: "Class 6", description: "Explore physics, chemistry, and biology through engaging activities.", chapters: 14, progress: 50, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
-        { id: 5, name: "English", category: "Language", level: "Class 6", description: "Improve reading, writing, grammar, and communication skills.", chapters: 11, progress: 30, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
-        { id: 6, name: "Social Studies", category: "Humanities", level: "Class 6", description: "Learn about history, geography, and civics in an interactive way.", chapters: 13, progress: 70, videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" },
-      ]);
-    }, 500);
-  }, []);
 
   const handleCardClick = (subject) => {
     navigate(`/coursedetails/${subject.id}`, { state: { subject } });
